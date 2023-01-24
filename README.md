@@ -9,3 +9,4 @@ Right now I think otel is too much of a pain to use in small/medium sized projec
 ## Todo
 
 - make docs on using erlog with specific libraries
+- Add Discord invite link
