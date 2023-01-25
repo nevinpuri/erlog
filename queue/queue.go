@@ -11,10 +11,10 @@ import (
 
 type Queue struct{
 	BatchSize int
+	timeout	int
 	ch chan []byte
 	closeCh chan bool
 	timer *time.Timer
-	timeout	int
 	logs asynclist.AsyncList
 }
 
@@ -93,7 +93,9 @@ func (q *Queue) Append(log []byte) error {
 }
 
 func (q *Queue) Flush() error {
-	if q.logs.Len() == 0 {
+
+	len := q.logs.Len()
+	if len == 0 {
 		return nil
 	}
 
@@ -101,9 +103,20 @@ func (q *Queue) Flush() error {
 		return errors.New("Db not connected")
 	}
 
-	// flush the logs to sqlite
-
 	fmt.Println("Flushing logs")
+
+	erlogs := make([]models.ErLog, len)
+
+	for _, v := range q.logs.All() {
+		if len(v) > 0 {
+			erlogs = append(erlogs, models.ErLog{O: v})
+		}
+	}
+
+	for _, v := range erlogs {
+		fmt.Printf("Erlog: %s\n", v.O)
+	}
+
 	// for _, v := range q.logs.All() {
 	// 	fmt.Printf("%s\n", v)
 	// }

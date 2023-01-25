@@ -10,6 +10,8 @@ type AsyncList struct {
 	v		[][]byte
 }
 
+// TODO: make two batch sizes, one which the array is created, and one which the array physically can't hold more
+
 func New(size int) AsyncList {
 	return AsyncList {v: make([][]byte, size), size: size, len: 0}
 }
