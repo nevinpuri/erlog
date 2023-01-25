@@ -1,10 +1,12 @@
 package queue
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
 	"erlog.net/asynclist"
+	"erlog.net/models"
 )
 
 type Queue struct{
@@ -93,6 +95,10 @@ func (q *Queue) Append(log []byte) error {
 func (q *Queue) Flush() error {
 	if q.logs.Len() == 0 {
 		return nil
+	}
+
+	if !models.IsConnected() {
+		return errors.New("Db not connected")
 	}
 
 	// flush the logs to sqlite
