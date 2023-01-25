@@ -58,7 +58,7 @@ func (q *Queue) Run() {
 
 			q.logs.Append(log)
 
-			fmt.Printf("Got new log %s\n", log)
+			fmt.Printf("Got new log %s", log)
 
 			if q.logs.Len() < q.BatchSize {
 				continue
@@ -70,9 +70,8 @@ func (q *Queue) Run() {
 				fmt.Printf("%s", err.Error())
 			}
 
-		// TODO
 		case <- q.timer.C:
-			fmt.Printf("Flushing because of timer %d", q.timeout)
+			// fmt.Printf("Flushing because of timer %d", q.timeout)
 			err := q.Flush()
 
 			if err != nil {
@@ -99,9 +98,9 @@ func (q *Queue) Flush() error {
 	// flush the logs to sqlite
 
 	fmt.Println("Flushing logs")
-	for _, v := range q.logs.All() {
-		fmt.Printf("%s\n", v)
-	}
+	// for _, v := range q.logs.All() {
+	// 	fmt.Printf("%s\n", v)
+	// }
 
 	fmt.Println("Done")
 

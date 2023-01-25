@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -29,14 +30,22 @@ func main() {
 		return
 	}
 
+	// sqlite performance tuning
+	// https://phiresky.github.io/blog/2020/sqlite-performance-tuning/
+	db.Exec("pragma journal_mode = WAL;")
+	db.Exec("pragma synchronous = normal;")
+	db.Exec("pragma temp_store = memory;")
+	db.Exec("pragma mmap_size = 30000000000;")
+
 	db.AutoMigrate(&ErLog{})
 
-	queue := queue.New(2, 5000)
+	queue := queue.New(512, 5000)
 	log.Logger = zerolog.New(netlogger.New()).With().Logger()
 
 	go queue.Run()
 
 	go func() {
+		time.Sleep(time.Second * 2)
 		log.Print("log this")
 		log.Print("hello world")
 		log.Print("new logs")
