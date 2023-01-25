@@ -13,6 +13,7 @@ Right now I think otel is too much of a pain to use in small/medium sized projec
 ## Todo
 
 - make docs on using erlog with specific libraries
+- make queue flush (queue side) instead of continuing to append to the array (maybe it already does, you just have to check the flush print statements)
 - Add Discord invite link
 - Add events which fire when logs aren't as usual, or logs deviate from a norm
 - use Server Sent Messages (or whatever they're called, openai uses them) to forward logs to the user as they arrive
