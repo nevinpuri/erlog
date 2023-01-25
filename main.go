@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -17,17 +18,32 @@ import (
 func main() {
 	models.Connect()
 
-	queue := queue.New(512, 5000)
+	queue := queue.New(512, 3000)
 	log.Logger = zerolog.New(netlogger.New()).With().Logger()
 
 	go queue.Run()
 
 	go func() {
 		time.Sleep(time.Second * 2)
-		log.Print("log this")
-		log.Print("hello world")
-		log.Print("new logs")
-		log.Print("final")
+
+		fmt.Println("Starting")
+		start := time.Now()
+		for i := 0; i < 2400; i++ {
+			log.Print("log this")
+			log.Print("hello world")
+			log.Print("new logs")
+			log.Print("final")
+		}
+
+		elapsed := time.Since(start)
+
+		fmt.Printf("%s", elapsed)
+
+		fmt.Println("Done")
+
+		time.Sleep(time.Second * 2)
+		log.Print("HI HI HI")
+		log.Print("Miami")
 	}()
 
 	r := gin.Default()

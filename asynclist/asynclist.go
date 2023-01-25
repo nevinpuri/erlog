@@ -1,6 +1,8 @@
 package asynclist
 
-import "sync"
+import (
+	"sync"
+)
 
 // TODO: make v type generic
 type AsyncList struct {
@@ -13,14 +15,21 @@ type AsyncList struct {
 // TODO: make two batch sizes, one which the array is created, and one which the array physically can't hold more
 
 func New(size int) AsyncList {
-	return AsyncList {v: make([][]byte, size), size: size, len: 0}
+	return AsyncList {v: make([][]byte, size), size: size, len: -1}
 }
 
 // Appends a value to the list
 func (c *AsyncList) Append(value []byte) {
 	c.mu.Lock()
-	c.v = append(c.v, value)
+
 	c.len += 1
+
+	if c.len >= c.size {
+		c.v = append(c.v, value)
+	} else {
+		c.v[c.len] = value
+	}
+
 	c.mu.Unlock()
 }
 
@@ -33,8 +42,12 @@ func (c *AsyncList) Value(idx uint) []byte {
 // freeing all memory
 func (c *AsyncList) Clear() {
 	c.mu.Lock()
-	c.v = nil
-	c.len = 0
+
+	for i := 0; i < c.len + 1; i++ {
+		c.v[i] = nil
+	}
+
+	c.len = -1
 	c.mu.Unlock()
 }
 
@@ -46,10 +59,10 @@ func (c *AsyncList) Len() int {
 // Returns all items in list
 // creating a copy first
 func (c *AsyncList) All() [][]byte {
-	d := make([][]byte, len(c.v))
+	d := make([][]byte, c.len + 1)
 
-	for i := range c.v {
-		d[i] = make([]byte, len(c.v[i]))
+	for i := 0; i < c.len + 1; i++ {
+		d[i] = make([]byte, len(c.v[i]) + 1)
 		copy(d[i], c.v[i])
 	}
 

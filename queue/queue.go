@@ -60,7 +60,7 @@ func (q *Queue) Run() {
 
 			q.logs.Append(log)
 
-			fmt.Printf("Got new log %s", log)
+			// fmt.Printf("Got new log %s", log)
 
 			if q.logs.Len() < q.BatchSize {
 				continue
@@ -94,8 +94,9 @@ func (q *Queue) Append(log []byte) error {
 
 func (q *Queue) Flush() error {
 
-	len := q.logs.Len()
-	if len == 0 {
+	logsLen := q.logs.Len()
+
+	if logsLen == 0 {
 		return nil
 	}
 
@@ -105,23 +106,21 @@ func (q *Queue) Flush() error {
 
 	fmt.Println("Flushing logs")
 
-	erlogs := make([]models.ErLog, len)
+	erlogs := make([]models.ErLog, logsLen + 1)
 
-	for _, v := range q.logs.All() {
-		if len(v) > 0 {
-			erlogs = append(erlogs, models.ErLog{O: v})
-		}
+	for i, v := range q.logs.All() {
+		erlogs[i] = models.ErLog{O: v}
 	}
 
-	for _, v := range erlogs {
-		fmt.Printf("Erlog: %s\n", v.O)
-	}
+	// for _, v := range erlogs {
+	// 	fmt.Printf("Erlog: %s\n", v.O)
+	// }
 
 	// for _, v := range q.logs.All() {
 	// 	fmt.Printf("%s\n", v)
 	// }
 
-	fmt.Println("Done")
+	models.DB.CreateInBatches(erlogs, q.BatchSize)
 
 	q.logs.Clear()
 
