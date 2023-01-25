@@ -11,7 +11,7 @@ type AsyncList struct {
 }
 
 func New(size int) AsyncList {
-	return AsyncList {v: make([][]byte, size), len: 0}
+	return AsyncList {v: make([][]byte, size), size: size, len: 0}
 }
 
 // Appends a value to the list

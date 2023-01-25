@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -13,6 +12,7 @@ import (
 	"gorm.io/gorm"
 
 	"erlog.net/netlogger"
+	"erlog.net/queue"
 	"github.com/gin-gonic/gin"
 )
 
@@ -31,14 +31,17 @@ func main() {
 
 	db.AutoMigrate(&ErLog{})
 
-	log.Logger = zerolog.New(netlogger.NetLogger{}).With().Logger()
+	queue := queue.New(2, 5000)
+	log.Logger = zerolog.New(netlogger.New()).With().Logger()
+
+	go queue.Run()
 
 	go func() {
-		time.Sleep(time.Second * 2)
 		log.Print("log this")
 		log.Print("hello world")
+		log.Print("new logs")
+		log.Print("final")
 	}()
-
 
 	r := gin.Default()
 
@@ -58,6 +61,8 @@ func main() {
 			return
 		}
 
+		queue.Append(data)
+
 		// result := json.RawMessage{}
 		// err = json.Unmarshal(data, &result)
 
@@ -67,9 +72,9 @@ func main() {
 		// 	})
 		// }
 
-		db.Create(&ErLog{O: data})
+		// db.Create(&ErLog{O: data})
 
-		fmt.Printf("%s\n", string(data))
+		// fmt.Printf("%s\n", string(data))
 
 		c.Status(200)
 	})

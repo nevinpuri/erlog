@@ -11,17 +11,23 @@ type Queue struct{
 	BatchSize int
 	ch chan []byte
 	closeCh chan bool
-	timer time.Timer
+	timer *time.Timer
+	timeout	int
 	logs asynclist.AsyncList
 }
 
-func (q *Queue) New(batchSize int) Queue {
+// creates a new queue
+// batchSize: the size to batch items before flushing
+// timeout: the period of time (in ms) to wait before flushing
+func New(batchSize int, timeout int) Queue {
 	return Queue {
 		BatchSize: batchSize,
 		// maybe make the size runtime.NumCPU() but idk
 		ch: make(chan []byte),
 		closeCh: make(chan bool),
 		logs: asynclist.New(batchSize),
+		timer: time.NewTimer(time.Millisecond * time.Duration(timeout)),
+		timeout:timeout,
 	}
 }
 
@@ -52,6 +58,8 @@ func (q *Queue) Run() {
 
 			q.logs.Append(log)
 
+			fmt.Printf("Got new log %s\n", log)
+
 			if q.logs.Len() < q.BatchSize {
 				continue
 			}
@@ -63,7 +71,15 @@ func (q *Queue) Run() {
 			}
 
 		// TODO
-		// case <- q.timer.C:
+		case <- q.timer.C:
+			fmt.Printf("Flushing because of timer %d", q.timeout)
+			err := q.Flush()
+
+			if err != nil {
+				fmt.Printf("%s", err.Error())
+			}
+
+			q.timer.Reset(time.Millisecond * time.Duration(q.timeout))
 		}
 	}
 }
@@ -86,6 +102,8 @@ func (q *Queue) Flush() error {
 	for _, v := range q.logs.All() {
 		fmt.Printf("%s\n", v)
 	}
+
+	fmt.Println("Done")
 
 	q.logs.Clear()
 
