@@ -2,6 +2,8 @@
 
 A self hosted server to send and view all your application logs.
 
+asdf
+
 ## Benchmarks
 
 - No official benchmarks, I can currently get around 9000 log insertions per second. It isn't a ton but it should be enough for most small scale projects.
