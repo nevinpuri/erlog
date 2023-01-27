@@ -67,20 +67,14 @@ func main() {
 			return
 		}
 
-		queue.Append(data)
+		err = queue.Append(data)
 
-		// result := json.RawMessage{}
-		// err = json.Unmarshal(data, &result)
-
-		// if err != nil {
-		// 	c.JSON(http.StatusInternalServerError, gin.H{
-		// 		"error": err.Error(),
-		// 	})
-		// }
-
-		// db.Create(&ErLog{O: data})
-
-		// fmt.Printf("%s\n", string(data))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
 
 		c.Status(200)
 	})
