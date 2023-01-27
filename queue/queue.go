@@ -7,6 +7,7 @@ import (
 
 	"erlog.net/asynclist"
 	"erlog.net/models"
+	"github.com/valyala/fastjson"
 )
 
 type Queue struct{
@@ -33,7 +34,6 @@ func New(batchSize int, timeout int) Queue {
 	}
 }
 
-// TODO: make flush after x seconds code
 func (q *Queue) Run() {
 	for {
 		select {
@@ -41,6 +41,7 @@ func (q *Queue) Run() {
 			// according to go:
 			// only the sender should close the channel,
 			// never the reciever
+
 			// close(q.ch)
 			// close(q.closeCh)
 
@@ -48,7 +49,6 @@ func (q *Queue) Run() {
 
 			// don't know of much else we can do here, good luck
 			if err != nil {
-				// log.Fatalf("%s", err.Error())
 				fmt.Printf("%s", err.Error())
 			}
 
@@ -59,8 +59,6 @@ func (q *Queue) Run() {
 			}
 
 			q.logs.Append(log)
-
-			// fmt.Printf("Got new log %s", log)
 
 			if q.logs.Len() < q.BatchSize {
 				continue
@@ -73,7 +71,6 @@ func (q *Queue) Run() {
 			}
 
 		case <- q.timer.C:
-			// fmt.Printf("Flushing because of timer %d", q.timeout)
 			err := q.Flush()
 
 			if err != nil {
@@ -86,7 +83,12 @@ func (q *Queue) Run() {
 }
 
 func (q *Queue) Append(log []byte) error {
-	// validate the json here
+	err := fastjson.ValidateBytes(log)
+
+	if err != nil {
+		return err
+	}
+	
 	q.ch <- log
 
 	return nil

@@ -1,10 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
 	"net/http"
-	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -23,6 +21,10 @@ func main() {
 
 	go queue.Run()
 
+	// todo: make queue take channel and return OK when it's started running
+	// so we can block here and wait for the queue to start
+
+	/*
 	go func() {
 		time.Sleep(time.Second * 2)
 
@@ -45,6 +47,7 @@ func main() {
 		log.Print("HI HI HI")
 		log.Print("Miami")
 	}()
+	*/
 
 	r := gin.Default()
 
