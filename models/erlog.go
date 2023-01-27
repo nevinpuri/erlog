@@ -7,5 +7,5 @@ import (
 
 type ErLog struct {
 	gorm.Model
-	O	datatypes.JSON
+	O	datatypes.JSON	`json:"o"`
 }
