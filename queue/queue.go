@@ -114,14 +114,6 @@ func (q *Queue) Flush() error {
 		erlogs[i] = models.ErLog{O: v}
 	}
 
-	// for _, v := range erlogs {
-	// 	fmt.Printf("Erlog: %s\n", v.O)
-	// }
-
-	// for _, v := range q.logs.All() {
-	// 	fmt.Printf("%s\n", v)
-	// }
-
 	models.DB.CreateInBatches(erlogs, q.BatchSize)
 
 	q.logs.Clear()

@@ -24,30 +24,28 @@ func main() {
 	// todo: make queue take channel and return OK when it's started running
 	// so we can block here and wait for the queue to start
 
-	/*
-	go func() {
-		time.Sleep(time.Second * 2)
+	// go func() {
+	// 	time.Sleep(time.Second * 2)
 
-		fmt.Println("Starting")
-		start := time.Now()
-		for i := 0; i < 2400; i++ {
-			log.Print("log this")
-			log.Print("hello world")
-			log.Print("new logs")
-			log.Print("final")
-		}
+	// 	fmt.Println("Starting")
+	// 	start := time.Now()
+	// 	for i := 0; i < 2400; i++ {
+	// 		log.Print("log this")
+	// 		log.Print("hello world")
+	// 		log.Print("new logs")
+	// 		log.Print("final")
+	// 	}
 
-		elapsed := time.Since(start)
+	// 	elapsed := time.Since(start)
 
-		fmt.Printf("%s", elapsed)
+	// 	fmt.Printf("%s", elapsed)
 
-		fmt.Println("Done")
+	// 	fmt.Println("Done")
 
-		time.Sleep(time.Second * 2)
-		log.Print("HI HI HI")
-		log.Print("Miami")
-	}()
-	*/
+	// 	time.Sleep(time.Second * 2)
+	// 	log.Print("HI HI HI")
+	// 	log.Print("Miami")
+	// }()
 
 	r := gin.Default()
 
@@ -82,7 +80,7 @@ func main() {
 	// get all logs
 	r.GET("/logs", func(c *gin.Context) {
 		var logs []models.ErLog
-		models.DB.Find(&logs)
+		models.DB.Find(&logs).Limit(20)
 
 		c.JSON(http.StatusOK, logs)
 	})
