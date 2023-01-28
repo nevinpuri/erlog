@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -25,30 +28,15 @@ func main() {
 	// todo: make queue take channel and return OK when it's started running
 	// so we can block here and wait for the queue to start
 
-	/*
+	
+	// /*
 	go func() {
 		time.Sleep(time.Second * 2)
-
 		fmt.Println("Starting")
-		start := time.Now()
-		for i := 0; i < 2400; i++ {
-			log.Print("log this")
-			log.Print("hello world")
-			log.Print("new logs")
-			log.Print("final")
-		}
-
-		elapsed := time.Since(start)
-
-		fmt.Printf("%s", elapsed)
-
-		fmt.Println("Done")
-
-		time.Sleep(time.Second * 2)
-		log.Print("HI HI HI")
-		log.Print("Miami")
+		log.Print("log this")
 	}()
-	*/
+	// */
+	
 
 	r := gin.Default()
 
@@ -61,6 +49,7 @@ func main() {
 	r.POST("/", func(c *gin.Context) {
 		data, err := ioutil.ReadAll(c.Request.Body)
 
+
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": err.Error(),
@@ -68,7 +57,22 @@ func main() {
 			return
 		}
 
-		err = queue.Append(data)
+		// trimmed := strings.TrimSpace(string(data))
+
+		// c.JSON(http.StatusOK, trimmed)
+		// return
+
+		buffer := new(bytes.Buffer)
+		err = json.Compact(buffer, data)
+
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+
+		err = queue.Append(buffer.Bytes())
 
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
@@ -83,7 +87,7 @@ func main() {
 	// get all logs
 	r.GET("/logs", func(c *gin.Context) {
 		var logs []models.ErLog
-		models.DB.Find(&logs).Limit(2)
+		models.DB.Find(&logs)
 
 		fmt.Printf("%s\n", logs[0].O)
 
@@ -99,7 +103,7 @@ func main() {
 
 		fmt.Printf("%d", len(logs))
 
-		c.JSON(http.StatusOK, gin.H{"data": logs})
+		c.JSON(http.StatusOK, logs[0])
 	})
 
 	log.Print(r.Run())

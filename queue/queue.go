@@ -1,13 +1,13 @@
 package queue
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
 
 	"erlog.net/asynclist"
 	"erlog.net/models"
-	"github.com/valyala/fastjson"
 )
 
 type Queue struct{
@@ -83,11 +83,18 @@ func (q *Queue) Run() {
 }
 
 func (q *Queue) Append(log []byte) error {
-	err := fastjson.ValidateBytes(log)
+	var js interface{}
+
+	err := json.Unmarshal(log, &js)
+
+	// err := fastjson.ValidateBytes(log)
 
 	if err != nil {
 		return err
 	}
+
+	// we don't actually care about the value of js
+	// we just care that it's valid
 	
 	q.ch <- log
 
@@ -98,15 +105,13 @@ func (q *Queue) Flush() error {
 
 	logsLen := q.logs.Len()
 
-	if logsLen == 0 {
+	if logsLen == -1 {
 		return nil
 	}
 
 	if !models.IsConnected() {
 		return errors.New("Db not connected")
 	}
-
-	fmt.Println("Flushing logs")
 
 	erlogs := make([]models.ErLog, logsLen + 1)
 
