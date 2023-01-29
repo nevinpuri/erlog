@@ -2,7 +2,10 @@ module erlog.net
 
 go 1.18
 
+require github.com/valyala/fastjson v1.6.4
+
 require (
+	github.com/gin-contrib/cors v1.4.0 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/gin-gonic/gin v1.8.2 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
@@ -22,7 +25,6 @@ require (
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
 	github.com/rs/zerolog v1.28.0 // indirect
 	github.com/ugorji/go/codec v1.2.8 // indirect
-	github.com/valyala/fastjson v1.6.4
 	golang.org/x/crypto v0.5.0 // indirect
 	golang.org/x/net v0.5.0 // indirect
 	golang.org/x/sys v0.4.0 // indirect

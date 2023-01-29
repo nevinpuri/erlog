@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
@@ -48,6 +49,7 @@ func main() {
 	
 
 	r := gin.Default()
+	r.Use(cors.Default())
 	r.GET("/", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"message": "pong",
@@ -113,7 +115,7 @@ func main() {
 
 		fmt.Printf("%d", len(logs))
 
-		c.JSON(http.StatusOK, logs[0])
+		c.JSON(http.StatusOK, logs)
 	})
 
 	log.Print(r.Run())
