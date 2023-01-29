@@ -116,7 +116,7 @@ func (q *Queue) Flush() error {
 	erlogs := make([]models.ErLog, logsLen + 1)
 
 	for i, v := range q.logs.All() {
-		erlogs[i] = models.ErLog{O: v}
+		erlogs[i] = models.ErLog{Data: v}
 	}
 
 	models.DB.CreateInBatches(erlogs, q.BatchSize)

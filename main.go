@@ -99,7 +99,7 @@ func main() {
 		var logs []models.ErLog
 		models.DB.Find(&logs)
 
-		fmt.Printf("%s\n", logs[0].O)
+		fmt.Printf("%s\n", logs[0].Data)
 
 		// for i, log := range logs {
 		// 	err := fastjson.ValidateBytes(log.O)
