@@ -62,7 +62,7 @@ func (c *AsyncList) All() [][]byte {
 	d := make([][]byte, c.len + 1)
 
 	for i := 0; i < c.len + 1; i++ {
-		d[i] = make([]byte, len(c.v[i]) + 1)
+		d[i] = make([]byte, len(c.v[i]))
 		copy(d[i], c.v[i])
 	}
 

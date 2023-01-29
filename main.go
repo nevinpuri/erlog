@@ -17,6 +17,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type Event struct {
+	Message chan string
+	NewClients chan chan string
+	ClosedClients chan chan string
+	TotalClients map[chan string]bool
+}
+
+type ClientChan chan string
+
 func main() {
 	models.Connect()
 
@@ -39,7 +48,6 @@ func main() {
 	
 
 	r := gin.Default()
-
 	r.GET("/", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"message": "pong",
@@ -71,6 +79,8 @@ func main() {
 			})
 			return
 		}
+
+		// fmt.Printf("%#v", string(buffer.Bytes()))
 
 		err = queue.Append(buffer.Bytes())
 
