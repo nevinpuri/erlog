@@ -11,3 +11,5 @@ export function toFormattedDate(_date: Date): string {
 
   return `${year}-${month}-${curDate}T${hours}:${minutes}:${seconds}.${milliseconds}`;
 }
+
+// TODO: make getService function which returns the service name from the log
