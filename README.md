@@ -23,3 +23,4 @@ Right now I think otel is too much of a pain to use in small/medium sized projec
 - Parse logs when they're sent in (probably bind them to a struct and save that instead of just validating to remove random chars at the end of the json)
 - Rewrite in elixir (I really want to try out live view + the concurrency)
 - Otel might be the play (maybe)
+- Not important: make a color system where each specific tag gets a specific color (eg: level=debug gets green or whatever color it gets, message= get a different one, but this is all on the fly (doesn't have elif and all that preconfigured colors) and prefferably stays the same after reloading the app so you can get used to the colors. Probably colordb or something like that
