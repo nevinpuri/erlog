@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/rs/zerolog"
@@ -39,13 +38,13 @@ func main() {
 	// so we can block here and wait for the queue to start
 
 	
-	// /*
+	/*
 	go func() {
 		time.Sleep(time.Second * 2)
 		fmt.Println("Starting")
 		log.Print("log this")
 	}()
-	// */
+	*/
 	
 
 	r := gin.Default()
@@ -61,7 +60,7 @@ func main() {
 
 
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
+			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
 			return
@@ -76,7 +75,7 @@ func main() {
 		err = json.Compact(buffer, data)
 
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
+			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
 			return
@@ -87,7 +86,7 @@ func main() {
 		err = queue.Append(buffer.Bytes())
 
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
+			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
 			return
@@ -96,8 +95,24 @@ func main() {
 		c.Status(200)
 	})
 
+	type LogGetRequestBody struct {
+		Search string `binding:"required"`
+	}
+
 	// get all logs
 	r.GET("/logs", func(c *gin.Context) {
+		var requestBody LogGetRequestBody
+
+		if err := c.BindJSON(&requestBody); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+
+			return
+		}
+
+		fmt.Printf("%s\n", requestBody.Search)
+
 		var logs []models.ErLog
 		models.DB.Find(&logs)
 
