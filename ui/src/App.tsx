@@ -1,12 +1,15 @@
-import { useEffect, useRef } from "react";
-import useSWR from "swr";
-import { getData } from "./types";
+import { useEffect, useRef, useState } from "react";
+import useSWR, { useSWRConfig } from "swr";
+import { API_URL, ErLog, getData, postData } from "./types";
 import { toFormattedDate } from "./utils";
 import { v4 as uuid } from "uuid";
+import axios, { AxiosResponse } from "axios";
 
 function App() {
   let listener: any;
   const inputRef = useRef<HTMLInputElement>(null);
+  const [query, setQuery] = useState<string>("");
+  const { mutate } = useSWRConfig();
 
   useEffect(() => {
     listener = window.addEventListener("keydown", (event) => {
@@ -41,15 +44,32 @@ function App() {
         return "";
     }
   }
-  const { data, error } = useSWR("/logs", getData);
+  const fetcher = async (url: string) => {
+    const response: AxiosResponse<ErLog[]> = await axios.post(
+      new URL(url, API_URL).href,
+      {
+        search: query,
+      }
+    );
+
+    return response.data;
+  };
+
+  useEffect(() => {
+    mutate("/search/logs");
+  }, [query]);
+
+  const { data, error } = useSWR("/search/logs", fetcher, {
+    refreshInterval: 1000,
+  });
 
   if (error) return <div>An error has occured</div>;
 
   if (!data) return <div>Loading</div>;
 
   return (
-    <div>
-      <div className="grid grid-rows-6 h-screen">
+    <div className="">
+      <div className="grid grid-rows-10 h-full">
         <div className="row-span-9">
           {data.map((log) => (
             <div
@@ -70,13 +90,13 @@ function App() {
         <div className="py-2 px-4">
           <input
             ref={inputRef}
+            onChange={(e) => setQuery(e.target.value)}
             type="text"
             placeholder="Search"
             className="w-full border-2 rounded-md border-gray-400 focus:border-gray-800 focus:ring-gray-800 px-2 py-1.5"
           />
         </div>
       </div>
-      {/* // <h1 className="text-2xl mb-2">Logs</h1> */}
     </div>
   );
 }

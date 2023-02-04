@@ -96,14 +96,15 @@ func main() {
 	})
 
 	type LogGetRequestBody struct {
-		Search string `binding:"required"`
+		Search string `json:"search"`
 	}
 
 	// get all logs
-	r.GET("/logs", func(c *gin.Context) {
+	r.POST("/search/logs", func(c *gin.Context) {
 		var requestBody LogGetRequestBody
 
 		if err := c.BindJSON(&requestBody); err != nil {
+			fmt.Println(err)
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
@@ -113,10 +114,11 @@ func main() {
 
 		fmt.Printf("%s\n", requestBody.Search)
 
-		var logs []models.ErLog
-		models.DB.Find(&logs)
+		// var logs []models.ErLog
+		logs := make([]models.ErLog, 0)
+		models.DB.Where("data LIKE ?", "%" + requestBody.Search + "%").Find(&logs)
 
-		fmt.Printf("%s\n", logs[0].Data)
+		// fmt.Printf("%s\n", logs[0].Data)
 
 		// for i, log := range logs {
 		// 	err := fastjson.ValidateBytes(log.O)

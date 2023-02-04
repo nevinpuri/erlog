@@ -10,9 +10,18 @@ export interface ErLog {
   data: any;
 }
 
-export async function getData(route: string): Promise<ErLog[]> {
+export async function getData(route: string, body: any): Promise<ErLog[]> {
   const response: AxiosResponse<ErLog[]> = await axios.get(
     new URL(route, API_URL).href
+  );
+
+  return response.data;
+}
+
+export async function postData(route: string, body: any): Promise<ErLog[]> {
+  const response: AxiosResponse<ErLog[]> = await axios.post(
+    new URL(route, API_URL).href,
+    body
   );
 
   return response.data;
