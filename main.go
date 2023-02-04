@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/rs/zerolog"
@@ -38,13 +39,15 @@ func main() {
 	// so we can block here and wait for the queue to start
 
 	
-	/*
+	// /*
 	go func() {
 		time.Sleep(time.Second * 2)
 		fmt.Println("Starting")
-		log.Print("log this")
+		for i := 0; i < 4; i++ {
+			log.Print("test log")
+		}
 	}()
-	*/
+	// */
 	
 
 	r := gin.Default()

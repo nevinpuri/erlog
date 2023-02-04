@@ -68,9 +68,9 @@ function App() {
   if (!data) return <div>Loading</div>;
 
   return (
-    <div className="">
-      <div className="grid grid-rows-10 h-full">
-        <div className="row-span-9">
+    <>
+      <div className="">
+        <div className="">
           {data.map((log) => (
             <div
               key={log.id}
@@ -87,17 +87,19 @@ function App() {
             </div>
           ))}
         </div>
-        <div className="py-2 px-4">
-          <input
-            ref={inputRef}
-            onChange={(e) => setQuery(e.target.value)}
-            type="text"
-            placeholder="Search"
-            className="w-full border-2 rounded-md border-gray-400 focus:border-gray-800 focus:ring-gray-800 px-2 py-1.5"
-          />
+        <div className="">
+          <div className="py-2 px-4">
+            <input
+              ref={inputRef}
+              onChange={(e) => setQuery(e.target.value)}
+              type="text"
+              placeholder="Search"
+              className="w-full border-2 rounded-md border-gray-400 focus:border-gray-800 focus:ring-gray-800 px-2 py-1.5"
+            />
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
