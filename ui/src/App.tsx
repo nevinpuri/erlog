@@ -69,34 +69,32 @@ function App() {
 
   return (
     <>
-      <div className="">
-        <div className="">
-          {data.map((log) => (
-            <div
-              key={log.id}
-              className={`flex space-x-4 ${getLevelBg(log.data.level)}`}
-            >
-              <h1>{toFormattedDate(log.createdAt)}</h1>
-              {Object.entries(log.data).map((data) => (
-                <h1 key={uuid()}>
-                  <span>{data[0]}</span>
-                  <span>=</span>
-                  <span>{data[1] as any}</span>
-                </h1>
-              ))}
-            </div>
-          ))}
-        </div>
-        <div className="">
-          <div className="py-2 px-4">
-            <input
-              ref={inputRef}
-              onChange={(e) => setQuery(e.target.value)}
-              type="text"
-              placeholder="Search"
-              className="w-full border-2 rounded-md border-gray-400 focus:border-gray-800 focus:ring-gray-800 px-2 py-1.5"
-            />
+      <div className="flex-1 overflow-auto">
+        {data.map((log) => (
+          <div
+            key={log.id}
+            className={`flex space-x-4 ${getLevelBg(log.data.level)}`}
+          >
+            <h1>{toFormattedDate(log.createdAt)}</h1>
+            {Object.entries(log.data).map((data) => (
+              <h1 key={uuid()}>
+                <span>{data[0]}</span>
+                <span>=</span>
+                <span>{data[1] as any}</span>
+              </h1>
+            ))}
           </div>
+        ))}
+      </div>
+      <div className="">
+        <div className="px-2 py-1.5">
+          <input
+            ref={inputRef}
+            onChange={(e) => setQuery(e.target.value)}
+            type="text"
+            placeholder="Search"
+            className="w-full border-2 rounded-md border-gray-400 focus:border-gray-800 focus:ring-gray-800 px-2.5 py-1.5"
+          />
         </div>
       </div>
     </>

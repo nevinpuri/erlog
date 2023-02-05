@@ -44,7 +44,7 @@ func main() {
 		time.Sleep(time.Second * 2)
 		fmt.Println("Starting")
 		for i := 0; i < 4; i++ {
-			log.Print("test log")
+			log.Print("good log")
 		}
 	}()
 	// */
