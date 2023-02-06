@@ -1,6 +1,8 @@
 ## Erlog
 
-A self hosted server to send and view all your application logs.
+**Stop Checking your logs to see when stuff go wrong. ErLog automatically does that and lets you trace through your services**
+
+Erlog basically monitors your logs and sends you events when things are whack.
 
 ## Benchmarks
 
