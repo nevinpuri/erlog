@@ -2,8 +2,9 @@
 
 **Stop Checking your logs to see when stuff go wrong. ErLog automatically does that and lets you trace through your services**
 
-Erlog basically monitors your logs and sends you events when things are whack.
+Erlog monitors your logs and sends you events when things are whack.
 
+## Observability
 ## Benchmarks
 
 - No official benchmarks, I can currently get around 9000 log insertions per second. It isn't a ton but it should be enough for most small scale projects.
