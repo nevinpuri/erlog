@@ -1,21 +1,23 @@
 ## Erlog
 
-**Stop Checking your logs to see when stuff go wrong. ErLog automatically does that and lets you trace through your services**
+Erlog is a service which lets you forward json logs from your existing libraries. It's meant to be really lightweight, easy to run, and work with your current logging setup.
 
-Erlog monitors your logs and sends you events when things are whack.
+## How does it work?
 
-## Observability
-## Benchmarks
+Erlog is just a web framework which batch inserts into an sqlite3 server. We then provide many tutorials on how to forward your logs to erlog **from withing your code**. There's no collector or external dependencies required.
 
-- No official benchmarks, I can currently get around 9000 log insertions per second. It isn't a ton but it should be enough for most small scale projects.
+## Is it Fast?
 
-## Log Forwarding
+No official benchmarks yet, but I can currently get around 9000 log insertions per second. It isn't a ton but it should be enough for most small scale projects.
 
-TODO
+## Future Goals
+
+I don't really know
+I want to rewrite erlog in either rust or elixir just for the fun of it (and maybe minor performance gains), as well as have better observability, a web ui, and a hosted service. If you have problems with logging you'd like me to solve with this product, please email me at me@nevin.cc. I'd love to hear your problems.
 
 ## Otel Support
 
-Right now I think otel is too much of a pain to use in small/medium sized projects. If otel becomes easier to use, or enough people ask for otel support, then I'll consider adding support for it.
+Right now I think otel is too much of a pain to use in small/medium sized projects. There's insane competition in the space, and I feel the implementation is still really bad. My main goal with this project is solving 80% of logging problems with 20% of the work, not providing complete application observability if it means spending 4 hours on otel. If otel becomes easier to use, or enough people ask for otel support, then I'll add support for it.
 
 ## Todo
 

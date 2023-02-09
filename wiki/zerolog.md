@@ -1,5 +1,8 @@
-package netlogger
+## zerolog
 
+To send logs from zerolog, start by creating a new file and appending the following text to it
+
+```go
 import (
 	"bytes"
 	"encoding/json"
@@ -29,3 +32,12 @@ func (logger NetLogger) Write(p []byte) (n int, err error) {
 
 	return len(p), nil
 }
+```
+
+After you've created the NetLogger struct, then override the global zerolog log object.
+
+```go
+log.Logger = zerolog.New(netlogger.New()).With().Logger()
+```
+
+Then, any calls to `log.Print`, `Log.Error`, etc will be forwarded to erlog.
