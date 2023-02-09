@@ -1,23 +1,31 @@
 ## Erlog
 
-Erlog is a service which lets you forward json logs from your existing libraries. It's meant to be really lightweight, easy to run, and work with your current logging setup.
+ErLog is a minimalist log collection service. You can either forward logs from existing log libraries (eg: zerolog or winston), or use the collector to forward logs from stdout or stderr.
+
+## Features (how can this help you)
+
+- Simple log collection service which runs on a $4 vps
+- Works with your existing libraries
+
+## Setup
+
+Run the docker image for the server.
 
 ## How does it work?
 
-Erlog is just a web framework which batch inserts into an sqlite3 server. We then provide many tutorials on how to forward your logs to erlog **from withing your code**. There's no collector or external dependencies required.
+ErLog is just an api which batch inserts data efficiently into an sqlite3 server.
 
 ## Is it Fast?
 
-No official benchmarks yet, but I can currently get around 9000 log insertions per second. It isn't a ton but it should be enough for most small scale projects.
+No official benchmarks yet, but I can currently get around 9000 log insertions per second locally. It isn't a ton but it should be enough for most small scale projects.
 
-## Future Goals
+## How Can I Scale it?
 
-I don't really know
-I want to rewrite erlog in either rust or elixir just for the fun of it (and maybe minor performance gains), as well as have better observability, a web ui, and a hosted service. If you have problems with logging you'd like me to solve with this product, please email me at me@nevin.cc. I'd love to hear your problems.
+I'm not sure of that now, but I'm developing a hosted version which auto scales based on your usage. If this sounds interesting to you, email me at me@nevin.cc and I'll set it up for you.
 
 ## Otel Support
 
-Right now I think otel is too much of a pain to use in small/medium sized projects. There's insane competition in the space, and I feel the implementation is still really bad. My main goal with this project is solving 80% of logging problems with 20% of the work, not providing complete application observability if it means spending 4 hours on otel. If otel becomes easier to use, or enough people ask for otel support, then I'll add support for it.
+Right now I think otel is too much of a pain to use in small/medium sized projects. For the insane amount of adoption, I feel the implementation is still really bad. If otel becomes easier to use or enough people ask for otel support, I'll add support for it.
 
 ## Todo
 
