@@ -32,7 +32,6 @@ Right now I think otel is too much of a pain to use in small/medium sized projec
 - make docs on using erlog with specific libraries
 - Add Discord invite link
 - Add events which fire when logs aren't as usual, or logs deviate from a norm
-- use Server Sent Messages (or whatever they're called, openai uses them) to forward logs to the user as they arrive
 - Parse logs when they're sent in (probably bind them to a struct and save that instead of just validating to remove random chars at the end of the json)
 - Rewrite in elixir (I really want to try out live view + the concurrency)
 - Otel might be the play (maybe)
