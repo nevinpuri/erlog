@@ -2,7 +2,7 @@
 
 ErLog is a minimalist log collection service. You can either forward logs from existing log libraries (eg: zerolog or winston), or use the collector to forward logs from stdout or stderr.
 
-## Features (how can this help you)
+## Features
 
 - Simple log collection service which runs on a $4 vps
 - Works with your existing libraries
