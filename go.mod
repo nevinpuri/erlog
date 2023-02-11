@@ -1,4 +1,4 @@
-module erlog.net
+module erlog
 
 go 1.18
 

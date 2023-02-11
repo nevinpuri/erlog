@@ -12,9 +12,10 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	"erlog.net/models"
-	"erlog.net/netlogger"
-	"erlog.net/queue"
+	"erlog/models"
+	"erlog/netlogger"
+	"erlog/queue"
+
 	"github.com/gin-gonic/gin"
 )
 

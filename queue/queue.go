@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"erlog.net/asynclist"
-	"erlog.net/models"
+	"erlog/asynclist"
+	"erlog/models"
 )
 
 type Queue struct{

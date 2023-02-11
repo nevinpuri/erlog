@@ -1,6 +1,6 @@
 ## Erlog
 
-ErLog is a minimalist log collection service. You can either forward logs from existing log libraries (eg: zerolog or winston), or use the collector to forward logs from stdout or stderr.
+ErLog is a minimalist log collection service. You can either forward structured logs from existing log libraries (eg: zerolog or winston), or use the collector to forward structured logs from stdout or stderr (coming soon).
 
 ## Features
 
@@ -9,7 +9,32 @@ ErLog is a minimalist log collection service. You can either forward logs from e
 
 ## Setup
 
-Run the docker image for the server.
+### Docker:
+
+`docker run -p 8080:8080 nevin1901/erlog:latest`
+
+### From Binaries
+
+Download binaries at [releases](./releases) and run ./erlog
+
+## Sending Logs
+
+ErLog supports json formatted logs. To send logs to erlog, send a post request to `localhost:8080` with whatever data you want to be saved.
+
+Example request body
+
+```json
+{
+  "timestamp": "1675955819",
+  "service": "my_service",
+  "key": "value",
+  "data": {
+    "another_key": "another value"
+  }
+}
+```
+
+Library specific examples coming soon
 
 ## How does it work?
 
@@ -32,7 +57,6 @@ Right now I think otel is too much of a pain to use in small/medium sized projec
 - make docs on using erlog with specific libraries
 - Add Discord invite link
 - Add events which fire when logs aren't as usual, or logs deviate from a norm
-- Parse logs when they're sent in (probably bind them to a struct and save that instead of just validating to remove random chars at the end of the json)
-- Rewrite in elixir (I really want to try out live view + the concurrency)
-- Otel might be the play (maybe)
+- Rewrite in rust elixir (I really want to try out live view + the concurrency)
+- Otel support (maybe)
 - Not important: make a color system where each specific tag gets a specific color (eg: level=debug gets green or whatever color it gets, message= get a different one, but this is all on the fly (doesn't have elif and all that preconfigured colors) and prefferably stays the same after reloading the app so you can get used to the colors. Probably colordb or something like that
