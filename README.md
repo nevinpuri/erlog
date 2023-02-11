@@ -48,10 +48,6 @@ sqlite> select COUNT(*) from er_logs where json_extract(data, "$.level") = "erro
 56
 ```
 
-## How does it work?
-
-ErLog is just an api which batch inserts data efficiently into an sqlite3 server.
-
 ## Is it Fast?
 
 No official benchmarks yet, but I can currently get around 9000 log insertions per second locally. It isn't a ton but it should be enough for most small scale projects.
