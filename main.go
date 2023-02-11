@@ -6,14 +6,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"time"
 
 	"github.com/gin-contrib/cors"
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
 	"erlog/models"
-	"erlog/netlogger"
 	"erlog/queue"
 
 	"github.com/gin-gonic/gin"
@@ -32,7 +29,7 @@ func main() {
 	models.Connect()
 
 	queue := queue.New(512, 3000)
-	log.Logger = zerolog.New(netlogger.New()).With().Logger()
+	// log.Logger = zerolog.New(netlogger.New()).With().Logger()
 
 	go queue.Run()
 
@@ -40,7 +37,7 @@ func main() {
 	// so we can block here and wait for the queue to start
 
 	
-	// /*
+	/*
 	go func() {
 		time.Sleep(time.Second * 2)
 		fmt.Println("Starting")
@@ -48,7 +45,7 @@ func main() {
 			log.Print("good log")
 		}
 	}()
-	// */
+	*/
 	
 
 	r := gin.Default()

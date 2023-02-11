@@ -26,6 +26,7 @@ Example request body
 ```json
 {
   "timestamp": "1675955819",
+  "level": "debug",
   "service": "my_service",
   "key": "value",
   "data": {
@@ -35,6 +36,17 @@ Example request body
 ```
 
 Library specific examples coming soon
+
+## Querying Logs
+
+The ErLog DB is literally just an sqlite file, so you can open it with any sqlite3 client. You can use any of sqlite3's [JSON](https://www.sqlite.org/json1.html) functions to query the `data` column in the `er_log` table.
+
+Example:
+
+```bash
+sqlite> select COUNT(*) from er_logs where json_extract(data, "$.level") = "error";
+56
+```
 
 ## How does it work?
 
