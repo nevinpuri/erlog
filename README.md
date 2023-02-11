@@ -1,3 +1,8 @@
+[discord-shield]: https://img.shields.io/discord/1032709477054562334?label=Discord
+[discord-url]: https://discord.com/invite/7FtTBwRdQK
+
+[![Discord][discord-shield]][discord-url]
+
 ## Erlog
 
 ErLog is a minimalist log collection service. You can either forward structured logs from existing log libraries (eg: zerolog or winston), or use the collector to forward structured logs from stdout or stderr (coming soon).
@@ -15,7 +20,7 @@ ErLog is a minimalist log collection service. You can either forward structured 
 
 ### From Binaries
 
-Download binaries at [releases](./releases) and run ./erlog
+Download binaries at [releases](https://github.com/Nevin1901/erlog/releases) and run ./erlog
 
 ## Sending Logs
 

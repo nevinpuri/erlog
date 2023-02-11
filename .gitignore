@@ -3,3 +3,4 @@ test.db-shm
 test.db-wal
 .DS_Store
 main
+erlog
