@@ -67,6 +67,7 @@ Right now I think otel is too much of a pain to use in small/medium sized projec
 
 ## Todo
 
+- Implement log searching functions
 - make docs on using erlog with specific libraries
 - Add Discord invite link
 - Add events which fire when logs aren't as usual, or logs deviate from a norm
