@@ -61,9 +61,11 @@ No official benchmarks yet, but I can currently get around 9000 log insertions p
 
 I'm not sure of that now, but I'm developing a hosted version which auto scales based on your usage. If this sounds interesting to you, email me at me@nevin.cc and I'll set it up for you.
 
-## Otel Support
+## OpenTelemtry Support
 
 Right now I think otel is too much of a pain to use in small/medium sized projects. For the insane amount of adoption, I feel the implementation is still really bad. If otel becomes easier to use or enough people ask for otel support, I'll add support for it.
+
+**Update** I think I'm going to support w3 trace context, which supports parent-id and span-id fields. This should support most features from otel (tracing across services), but wouldn't lock you into using opentelemetry with erlog.
 
 ## Todo
 

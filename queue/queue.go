@@ -87,8 +87,6 @@ func (q *Queue) Append(log []byte) error {
 
 	err := json.Unmarshal(log, &js)
 
-	// err := fastjson.ValidateBytes(log)
-
 	if err != nil {
 		return err
 	}
