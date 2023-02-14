@@ -1,7 +1,6 @@
 package queue
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -10,6 +9,7 @@ import (
 	"erlog/models"
 
 	"github.com/google/uuid"
+	"github.com/valyala/fastjson"
 )
 
 type Queue struct{
@@ -60,6 +60,8 @@ func (q *Queue) Run() {
 				continue
 			}
 
+			// append here
+
 			q.logs.Append(log)
 
 			if q.logs.Len() < q.BatchSize {
@@ -85,13 +87,21 @@ func (q *Queue) Run() {
 }
 
 func (q *Queue) Append(log []byte) error {
-	var js interface{}
+	// var js interface{}
 
-	err := json.Unmarshal(log, &js)
+	// err := json.Unmarshal(log, &js)
+
+	// if err != nil {
+	// 	return err
+	// }
+
+	val, err := fastjson.ParseBytes(log)
 
 	if err != nil {
 		return err
 	}
+
+	ParseJson(val)
 
 	// we don't actually care about the value of js
 	// we just care that it's valid
@@ -116,6 +126,7 @@ func (q *Queue) Flush() error {
 	erlogs := make([]models.ErLog, logsLen + 1)
 
 	for i, v := range q.logs.All() {
+		fmt.Printf("%d", v.Id)
 		// parse the fucking log
 
 		erlogs[i] = models.ErLog{
@@ -123,11 +134,11 @@ func (q *Queue) Flush() error {
 		}
 	}
 
-	batch, err := models.Conn.PrepareBatch(models.CTX, "INSERT INTO er_logs")
+	// batch, err := models.Conn.PrepareBatch(models.CTX, "INSERT INTO er_logs")
 
-	if err != nil {
-		return err
-	}
+	// if err != nil {
+	// 	return err
+	// }
 
 	// models.DB.PrepareBatch()
 	// models.DB.CreateInBatches(erlogs, q.BatchSize)
@@ -146,4 +157,11 @@ func (q *Queue) Close() error {
 
 	q.closeCh <- true
 	return nil
+}
+
+
+func ParseJson() {
+}
+
+func ParseValue() {
 }
