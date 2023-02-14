@@ -1,48 +1,62 @@
 package models
 
 import (
-	"database/sql"
+	"context"
 	"fmt"
+	"net"
+	"os"
 	"time"
 
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
+	"github.com/ClickHouse/clickhouse-go/v2"
 )
 
-type DeletedAt sql.NullTime
-
-type Model struct {
-	ID        uint `gorm:"primarykey" json:"id"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
-	DeletedAt gorm.DeletedAt `gorm:"index" json:"deletedAt"`
-}
-
-var DB *gorm.DB
+var CTX context.Context
+var Conn clickhouse.Conn
+var dialCount int32
+// var DB *gorm.DB
 
 func Connect() {
-	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
+	CTX = context.Background()
+	conn, err := clickhouse.Open(&clickhouse.Options{
+		Addr: []string{"127.0.0.1:19000"},
+		Auth: clickhouse.Auth{
+			Database: "default",
+			Username: "default",
+			Password: "test123",
+		},
+		DialContext: func(ctx context.Context, addr string) (net.Conn, error) {
+			dialCount++
+			var d net.Dialer
+			return d.DialContext(ctx, "tcp", addr)
+		},
+		Debug: true,
+		Debugf: func(format string, v ...interface{}) {
+		},
+		Settings: clickhouse.Settings{
+			"max_execution_time": 60,
+		},
+		Compression: &clickhouse.Compression{
+			Method: clickhouse.CompressionLZ4,
+		},
+		DialTimeout: time.Duration(10) * time.Second,
+		MaxOpenConns: 5,
+		MaxIdleConns: 5,
+		ConnMaxLifetime: time.Duration(10) * time.Minute,
+		ConnOpenStrategy: clickhouse.ConnOpenInOrder,
+		BlockBufferSize: 10,
+	})
 
 	if err != nil {
-		fmt.Printf("Failed opening db\nError:%s", err.Error());
-		return
+		fmt.Printf("%s\n", err)
+		os.Exit(1)
 	}
 
-	// sqlite performance tuning
-	// https://phiresky.github.io/blog/2020/sqlite-performance-tuning/
-	db.Exec("pragma journal_mode = WAL;")
-	db.Exec("pragma synchronous = normal;")
-	db.Exec("pragma temp_store = memory;")
-	db.Exec("pragma mmap_size = 30000000000;")
-
-	db.AutoMigrate(&ErLog{})
-
-	DB = db
+	Conn = conn
 }
 
 // todo: make this actually check if the db is connected
 func IsConnected() bool {
-	if DB == nil {
+	if Conn == nil {
 		return false
 	}
 

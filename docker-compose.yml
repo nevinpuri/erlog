@@ -11,26 +11,26 @@ services:
         hard: "262144"
     volumes:
       - "./config/clickhouse/default.xml:/etc/clickhouse-server/users.d/default.xml"
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--spider", "127.0.0.1:8123/ping"]
-      interval: 2s
-      timeout: 4s
-      retries: 3
-  otel-collector:
-    image: otel/opentelemetry-collector-contrib
-    command: ["--config=/etc/otel-collector-config.yaml"]
-    volumes:
-      - ./config/opentelemetry/otel-collector-config.yaml:/etc/otel-collector-config.yaml
-    ports:
-      - "1888:1888" # pprof extension
-      - "8888:8888" # Prometheus metrics exposed by the collector
-      - "8889:8889" # Prometheus exporter metrics
-      - "13133:13133" # health_check extension
-      - "4317:4317" # OTLP gRPC receiver
-      - "4318:4318" # OTLP http receiver
-      - "55679:55679" # zpages extension
-    links:
-      - db
-    depends_on:
-      db:
-        condition: service_healthy
+    # healthcheck:
+    #   test: ["CMD", "wget", "--quiet", "--spider", "127.0.0.1:8123/ping"]
+    #   interval: 2s
+    #   timeout: 4s
+    #   retries: 3
+  # otel-collector:
+  #   image: otel/opentelemetry-collector-contrib
+  #   command: ["--config=/etc/otel-collector-config.yaml"]
+  #   volumes:
+  #     - ./config/opentelemetry/otel-collector-config.yaml:/etc/otel-collector-config.yaml
+  #   ports:
+  #     - "1888:1888" # pprof extension
+  #     - "8888:8888" # Prometheus metrics exposed by the collector
+  #     - "8889:8889" # Prometheus exporter metrics
+  #     - "13133:13133" # health_check extension
+  #     - "4317:4317" # OTLP gRPC receiver
+  #     - "4318:4318" # OTLP http receiver
+  #     - "55679:55679" # zpages extension
+  #   links:
+  #     - db
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy

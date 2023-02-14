@@ -8,6 +8,8 @@ import (
 
 	"erlog/asynclist"
 	"erlog/models"
+
+	"github.com/google/uuid"
 )
 
 type Queue struct{
@@ -114,10 +116,21 @@ func (q *Queue) Flush() error {
 	erlogs := make([]models.ErLog, logsLen + 1)
 
 	for i, v := range q.logs.All() {
-		erlogs[i] = models.ErLog{Data: v}
+		// parse the fucking log
+
+		erlogs[i] = models.ErLog{
+			Id: uuid.New(),
+		}
 	}
 
-	models.DB.CreateInBatches(erlogs, q.BatchSize)
+	batch, err := models.Conn.PrepareBatch(models.CTX, "INSERT INTO er_logs")
+
+	if err != nil {
+		return err
+	}
+
+	// models.DB.PrepareBatch()
+	// models.DB.CreateInBatches(erlogs, q.BatchSize)
 
 	q.logs.Clear()
 

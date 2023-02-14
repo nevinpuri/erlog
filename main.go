@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -94,46 +93,6 @@ func main() {
 		}
 
 		c.Status(200)
-	})
-
-	type LogGetRequestBody struct {
-		Search string `json:"search"`
-	}
-
-	// get all logs
-	r.POST("/search/logs", func(c *gin.Context) {
-		var requestBody LogGetRequestBody
-
-		if err := c.BindJSON(&requestBody); err != nil {
-			fmt.Println(err)
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
-
-			return
-		}
-
-		fmt.Printf("%s\n", requestBody.Search)
-
-		// var logs []models.ErLog
-		logs := make([]models.ErLog, 0)
-		models.DB.Where("data LIKE ?", "%" + requestBody.Search + "%").Find(&logs)
-
-		// fmt.Printf("%s\n", logs[0].Data)
-
-		// for i, log := range logs {
-		// 	err := fastjson.ValidateBytes(log.O)
-
-		// 	if err != nil {
-		// 		fmt.Printf("%d:%s\n", i, err.Error())
-		// 		c.JSON(http.StatusInternalServerError, err.Error())
-		// 		return
-		// 	}
-		// }
-
-		fmt.Printf("%d", len(logs))
-
-		c.JSON(http.StatusOK, logs)
 	})
 
 	log.Print(r.Run())
