@@ -101,8 +101,6 @@ func (q *Queue) Append(log []byte) error {
 		return err
 	}
 
-	ParseJson(val)
-
 	// we don't actually care about the value of js
 	// we just care that it's valid
 	
@@ -163,5 +161,31 @@ func (q *Queue) Close() error {
 func ParseJson() {
 }
 
-func ParseValue() {
+func ParseObject(value fastjson.Object) error {
+	value.Visit(func(k []byte, v *fastjson.Value) {
+		// basically just check if type is array or nested object
+		// for anything else just append that to the specific field array
+		switch v.Type() {
+		case fastjson.TypeArray:
+			// parse array
+			break
+		case fastjson.TypeObject:
+			ParseObject(value)
+		}
+	})
+
+	// for each item in the object
+	switch value.Type() {
+	case fastjson.TypeObject:
+		break
+	}
+}
+
+func ParseArray(value fastjson.Value) (fastjson.Value, error) {
+	// will consume array and return an array of fastjson valuesf
+	if value.Type() != fastjson.TypeArray {
+		return fastjson.Value{}, errors.New("Type is not array")
+	}
+
+	return fastjson.Value{}, nil
 }
