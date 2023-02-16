@@ -101,7 +101,10 @@ func (q *Queue) Append(log []byte) error {
 		return err
 	}
 
-	ParseValue(val)
+	keys := ""
+
+	// ideally this should be an object so just get the object here but it really doesn't matter for now
+	ParseValue(val, &keys)
 
 	// we don't actually care about the value of js
 	// we just care that it's valid
@@ -159,7 +162,15 @@ func (q *Queue) Close() error {
 	return nil
 }
 
-func ParseValue(value *fastjson.Value) error {
+func ParseJson(value *fastjson.Value) error {
+	key := ""
+	ParseValue(value, &key)
+
+	return nil
+}
+
+func ParseValue(value *fastjson.Value, key *string) error {
+	// TODO: check if key is nil in every function
 	switch value.Type() {
 	case fastjson.TypeArray:
 		val, err := value.Array()
@@ -168,7 +179,7 @@ func ParseValue(value *fastjson.Value) error {
 			return err
 		}
 
-		ParseArray(val)
+		ParseArray(val, key)
 
 		break
 	case fastjson.TypeObject:
@@ -178,27 +189,37 @@ func ParseValue(value *fastjson.Value) error {
 			return err
 		}
 
-		ParseObject(obj)
+		ParseObject(obj, key)
 		break
 	case fastjson.TypeString:
 		// use MarshalTo for speed
-		fmt.Printf("Found string with value: %s\n", value.String())
+		fmt.Printf("Type: str, key: %s, val: %s\n", *key, value.String())
 	}
 
 	return nil
 }
 
-func ParseObject(value *fastjson.Object) {
+func ParseObject(value *fastjson.Object, key *string) error {
 	value.Visit(func(k []byte, v *fastjson.Value) {
-		ParseValue(v)
+		var value_key string
+
+		if *key == "" {
+			value_key = string(k)
+		} else {
+			value_key = *key + "." + string(k)
+		}
+
+		// ok so this is the key and we need to keep track of it
+		ParseValue(v, &value_key)
 		// basically just check if type is array or nested object
 		// for anything else just append that to the specific field array
 	})
 }
 
-func ParseArray(value []*fastjson.Value) error {
+func ParseArray(value []*fastjson.Value, key *string) error {
+	// todo: we need to edit the key or something for the array and figure out how to store it in clickhouse tables
 	for _, val := range value {
-		ParseValue(val)
+		ParseValue(val, key)
 	}
 
 	// will consume array and return an array of fastjson valuesf

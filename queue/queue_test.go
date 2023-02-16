@@ -14,5 +14,7 @@ func TestParseVal(t *testing.T) {
 		t.Logf("%s", err.Error())
 	}
 
-	queue.ParseValue(val)
+	keys := ""
+
+	queue.ParseValue(val, &keys)
 }
