@@ -7,6 +7,7 @@ import (
 
 	"erlog/asynclist"
 	"erlog/models"
+	"erlog/parser"
 
 	"github.com/google/uuid"
 	"github.com/valyala/fastjson"
@@ -104,7 +105,7 @@ func (q *Queue) Append(log []byte) error {
 	keys := ""
 
 	// ideally this should be an object so just get the object here but it really doesn't matter for now
-	ParseValue(val, &keys)
+	parser.ParseValue(val, &keys)
 
 	// we don't actually care about the value of js
 	// we just care that it's valid
@@ -159,73 +160,5 @@ func (q *Queue) Close() error {
 	}
 
 	q.closeCh <- true
-	return nil
-}
-
-func ParseJson(value *fastjson.Value) error {
-	key := ""
-	ParseValue(value, &key)
-
-	return nil
-}
-
-func ParseValue(value *fastjson.Value, key *string) error {
-	// TODO: check if key is nil in every function
-	switch value.Type() {
-	case fastjson.TypeArray:
-		val, err := value.Array()
-
-		if err != nil {
-			return err
-		}
-
-		ParseArray(val, key)
-
-		break
-	case fastjson.TypeObject:
-		obj, err := value.Object()
-
-		if err != nil {
-			return err
-		}
-
-		ParseObject(obj, key)
-		break
-	case fastjson.TypeString:
-		// use MarshalTo for speed
-		fmt.Printf("Type: str, key: %s, val: %s\n", *key, value.String())
-	}
-
-	return nil
-}
-
-func ParseObject(value *fastjson.Object, key *string) error {
-	value.Visit(func(k []byte, v *fastjson.Value) {
-		var value_key string
-
-		if *key == "" {
-			value_key = string(k)
-		} else {
-			value_key = *key + "." + string(k)
-		}
-
-		// ok so this is the key and we need to keep track of it
-		ParseValue(v, &value_key)
-		// basically just check if type is array or nested object
-		// for anything else just append that to the specific field array
-	})
-}
-
-func ParseArray(value []*fastjson.Value, key *string) error {
-	// todo: we need to edit the key or something for the array and figure out how to store it in clickhouse tables
-	for _, val := range value {
-		ParseValue(val, key)
-	}
-
-	// will consume array and return an array of fastjson valuesf
-	// if value.Type() != fastjson.TypeArray {
-	// 	return fastjson.Value{}, errors.New("Type is not array")
-	// }
-
 	return nil
 }
