@@ -62,7 +62,7 @@ func (q *Queue) Run() {
 
 			// append here
 
-			q.logs.Append(log)
+			// q.logs.Append(log)
 
 			if q.logs.Len() < q.BatchSize {
 				continue
@@ -100,6 +100,8 @@ func (q *Queue) Append(log []byte) error {
 	if err != nil {
 		return err
 	}
+
+	ParseValue(val)
 
 	// we don't actually care about the value of js
 	// we just care that it's valid
@@ -157,35 +159,52 @@ func (q *Queue) Close() error {
 	return nil
 }
 
+func ParseValue(value *fastjson.Value) error {
+	switch value.Type() {
+	case fastjson.TypeArray:
+		val, err := value.Array()
 
-func ParseJson() {
+		if err != nil {
+			return err
+		}
+
+		ParseArray(val)
+
+		break
+	case fastjson.TypeObject:
+		obj, err := value.Object()
+
+		if err != nil {
+			return err
+		}
+
+		ParseObject(obj)
+		break
+	case fastjson.TypeString:
+		// use MarshalTo for speed
+		fmt.Printf("Found string with value: %s\n", value.String())
+	}
+
+	return nil
 }
 
-func ParseObject(value fastjson.Object) error {
+func ParseObject(value *fastjson.Object) {
 	value.Visit(func(k []byte, v *fastjson.Value) {
+		ParseValue(v)
 		// basically just check if type is array or nested object
 		// for anything else just append that to the specific field array
-		switch v.Type() {
-		case fastjson.TypeArray:
-			// parse array
-			break
-		case fastjson.TypeObject:
-			ParseObject(value)
-		}
 	})
-
-	// for each item in the object
-	switch value.Type() {
-	case fastjson.TypeObject:
-		break
-	}
 }
 
-func ParseArray(value fastjson.Value) (fastjson.Value, error) {
-	// will consume array and return an array of fastjson valuesf
-	if value.Type() != fastjson.TypeArray {
-		return fastjson.Value{}, errors.New("Type is not array")
+func ParseArray(value []*fastjson.Value) error {
+	for _, val := range value {
+		ParseValue(val)
 	}
 
-	return fastjson.Value{}, nil
+	// will consume array and return an array of fastjson valuesf
+	// if value.Type() != fastjson.TypeArray {
+	// 	return fastjson.Value{}, errors.New("Type is not array")
+	// }
+
+	return nil
 }
