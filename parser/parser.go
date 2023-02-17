@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"erlog/models"
 	"errors"
 	"fmt"
 
@@ -8,16 +9,21 @@ import (
 )
 
 
-func ParseJson(value *fastjson.Value) error {
+func ParseJson(value *fastjson.Value) (models.ErLog, error) {
 	key := ""
-	ParseValue(value, &key)
+	erlog := models.ErLog{}
+	ParseValue(value, &key, &erlog)
 
-	return nil
+	return models.ErLog{}, nil
 }
 
-func ParseValue(value *fastjson.Value, key *string) error {
+func ParseValue(value *fastjson.Value, key *string, erlog *models.ErLog) error {
 	if key == nil {
 		return errors.New("key argument is nil")
+	}
+	
+	if erlog == nil {
+		return errors.New("Erlog argument is nil")
 	}
 
 	switch value.Type() {
@@ -28,7 +34,7 @@ func ParseValue(value *fastjson.Value, key *string) error {
 			return err
 		}
 
-		ParseArray(val, key)
+		ParseArray(val, key, erlog)
 
 		break
 	case fastjson.TypeObject:
@@ -38,11 +44,18 @@ func ParseValue(value *fastjson.Value, key *string) error {
 			return err
 		}
 
-		ParseObject(obj, key)
+		ParseObject(obj, key, erlog)
 		break
 	case fastjson.TypeString:
 		// use MarshalTo for speed
-		fmt.Printf("Type: str, key: %s, val: %s\n", *key, value.String())
+		var dst []byte
+
+		value.MarshalTo(dst)
+
+		erlog.StringKeys = append(erlog.StringKeys, *key)
+		erlog.StringValues = append(erlog.StringValues, string(dst))
+
+		fmt.Printf("Type: str, key: %s, val: %s\n", *key, string(dst))
 		break
 	case fastjson.TypeNumber:
 		num, err := value.Float64()
@@ -50,6 +63,9 @@ func ParseValue(value *fastjson.Value, key *string) error {
 		if err != nil {
 			return err
 		}
+
+		erlog.NumberKeys = append(erlog.NumberKeys, *key)
+		erlog.NumberValues = append(erlog.NumberValues, num)
 
 		fmt.Printf("Type: number, key: %s, val: %v\n", *key, num)
 		break
@@ -60,6 +76,9 @@ func ParseValue(value *fastjson.Value, key *string) error {
 			return err
 		}
 
+		erlog.BoolKeys = append(erlog.BoolKeys, *key)
+		erlog.BoolValues = append(erlog.BoolValues, b)
+
 		fmt.Printf("Type: bool, key: %s, val: %t\n", *key, b)
 		break
 	case fastjson.TypeFalse:
@@ -68,6 +87,9 @@ func ParseValue(value *fastjson.Value, key *string) error {
 		if err != nil {
 			return err
 		}
+		
+		erlog.BoolKeys = append(erlog.BoolKeys, *key)
+		erlog.BoolValues = append(erlog.BoolValues, b)
 
 		fmt.Printf("Type: bool, key: %s, val: %t\n", *key, b)
 		break
@@ -79,9 +101,13 @@ func ParseValue(value *fastjson.Value, key *string) error {
 	return nil
 }
 
-func ParseObject(value *fastjson.Object, key *string) error {
+func ParseObject(value *fastjson.Object, key *string, erlog *models.ErLog) error {
 	if key == nil {
 		return errors.New("key argument is nil")
+	}
+	
+	if erlog == nil {
+		return errors.New("Erlog argument is nil")
 	}
 
 	value.Visit(func(k []byte, v *fastjson.Value) {
@@ -94,7 +120,7 @@ func ParseObject(value *fastjson.Object, key *string) error {
 		}
 
 		// ok so this is the key and we need to keep track of it
-		ParseValue(v, &value_key)
+		ParseValue(v, &value_key, erlog)
 		// basically just check if type is array or nested object
 		// for anything else just append that to the specific field array
 	})
@@ -102,14 +128,18 @@ func ParseObject(value *fastjson.Object, key *string) error {
 	return nil
 }
 
-func ParseArray(value []*fastjson.Value, key *string) error {
+func ParseArray(value []*fastjson.Value, key *string, erlog *models.ErLog) error {
 	if key == nil {
 		return errors.New("key argument is nil")
+	}
+	
+	if erlog == nil {
+		return errors.New("Erlog argument is nil")
 	}
 
 	// todo: we need to edit the key or something for the array and figure out how to store it in clickhouse tables
 	for _, val := range value {
-		ParseValue(val, key)
+		ParseValue(val, key, erlog)
 	}
 
 	// will consume array and return an array of fastjson valuesf

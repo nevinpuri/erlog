@@ -7,7 +7,7 @@ create table er_logs (
     NumberKeys     Array(String),
     NumberValues   Array(Float64),
     BoolNames      Array(String),
-    BoolValues     Array(UInt8)
+    BoolValues     Array(Bool)
 ) Engine MergeTree()
 PARTITION BY toDate(Timestamp)
 ORDER BY toUnixTimestamp(Timestamp)

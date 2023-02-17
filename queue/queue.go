@@ -103,9 +103,10 @@ func (q *Queue) Append(log []byte) error {
 	}
 
 	keys := ""
+	erlog := models.ErLog{}
 
 	// ideally this should be an object so just get the object here but it really doesn't matter for now
-	parser.ParseValue(val, &keys)
+	parser.ParseValue(val, &keys, &erlog)
 
 	// we don't actually care about the value of js
 	// we just care that it's valid

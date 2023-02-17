@@ -1,6 +1,7 @@
 package parser_test
 
 import (
+	"erlog/models"
 	"erlog/parser"
 	"testing"
 
@@ -15,6 +16,9 @@ func TestParseVal(t *testing.T) {
 	}
 
 	keys := ""
+	erlog := models.ErLog{}
 
-	parser.ParseValue(val, &keys)
+	parser.ParseValue(val, &keys, &erlog)
+
+	t.Logf("String keys: %v, string values: %v, number keys: %v, number values: %v, bool keys: %v, bool_values: %v\n", erlog.StringKeys, erlog.StringValues, erlog.NumberKeys, erlog.NumberValues, erlog.BoolKeys, erlog.BoolValues)
 }
