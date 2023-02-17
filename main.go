@@ -3,8 +3,10 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 
 	"github.com/gin-contrib/cors"
 	"github.com/rs/zerolog/log"
@@ -25,27 +27,21 @@ type Event struct {
 type ClientChan chan string
 
 func main() {
-	models.Connect()
+	err := models.Connect()
+
+	if err != nil {
+		fmt.Printf("err: %v\n", err)
+		os.Exit(1)
+	}
+
+	models.Conn.Exec(models.CTX, models.SetupTable)
 
 	queue := queue.New(512, 3000)
-	// log.Logger = zerolog.New(netlogger.New()).With().Logger()
 
 	go queue.Run()
 
 	// todo: make queue take channel and return OK when it's started running
 	// so we can block here and wait for the queue to start
-
-	
-	/*
-	go func() {
-		time.Sleep(time.Second * 2)
-		fmt.Println("Starting")
-		for i := 0; i < 4; i++ {
-			log.Print("good log")
-		}
-	}()
-	*/
-	
 
 	r := gin.Default()
 	r.Use(cors.Default())

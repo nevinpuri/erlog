@@ -9,14 +9,13 @@ import (
 	"erlog/models"
 	"erlog/parser"
 
-	"github.com/google/uuid"
 	"github.com/valyala/fastjson"
 )
 
 type Queue struct{
 	BatchSize int
 	timeout	int
-	ch chan []byte
+	ch chan models.ErLog
 	closeCh chan bool
 	timer *time.Timer
 	logs asynclist.AsyncList
@@ -29,7 +28,7 @@ func New(batchSize int, timeout int) Queue {
 	return Queue {
 		BatchSize: batchSize,
 		// maybe make the size runtime.NumCPU() but idk
-		ch: make(chan []byte),
+		ch: make(chan models.ErLog),
 		closeCh: make(chan bool),
 		logs: asynclist.New(batchSize),
 		timer: time.NewTimer(time.Millisecond * time.Duration(timeout)),
@@ -57,13 +56,9 @@ func (q *Queue) Run() {
 
 			return
 		case log := <- q.ch:
-			if len(log) == 0 {
-				continue
-			}
-
 			// append here
 
-			// q.logs.Append(log)
+			q.logs.Append(log)
 
 			if q.logs.Len() < q.BatchSize {
 				continue
@@ -102,16 +97,17 @@ func (q *Queue) Append(log []byte) error {
 		return err
 	}
 
-	keys := ""
-	erlog := models.ErLog{}
-
 	// ideally this should be an object so just get the object here but it really doesn't matter for now
-	parser.ParseValue(val, &keys, &erlog)
+	erlog, err := parser.ParseJson(val)
+
+	if err != nil {
+		return err
+	}
 
 	// we don't actually care about the value of js
 	// we just care that it's valid
 	
-	q.ch <- log
+	q.ch <- erlog
 
 	return nil
 }
@@ -128,25 +124,32 @@ func (q *Queue) Flush() error {
 		return errors.New("Db not connected")
 	}
 
-	erlogs := make([]models.ErLog, logsLen + 1)
+	batch, err := models.Conn.PrepareBatch(models.CTX, "INSERT INTO er_logs")
 
-	for i, v := range q.logs.All() {
-		fmt.Printf("%d", v.Id)
-		// parse the fucking log
+	if err != nil {
+		return err
+	}
 
-		erlogs[i] = models.ErLog{
-			Id: uuid.New(),
+	for _, v := range q.logs.All() {
+		// fmt.Printf("%d", v.Id)
+
+		fmt.Printf("String keys: %v, string values: %v, number keys: %v, number values: %v, bool keys: %v, bool_values: %v\n", v.StringKeys, v.StringValues, v.NumberKeys, v.NumberValues, v.BoolKeys, v.BoolValues)
+		err = batch.AppendStruct(&v)
+
+		if err != nil {
+			fmt.Printf("err: %v\n", err)
+			return err
 		}
 	}
 
-	// batch, err := models.Conn.PrepareBatch(models.CTX, "INSERT INTO er_logs")
+	err = batch.Send()
 
-	// if err != nil {
-	// 	return err
-	// }
+	fmt.Printf("Send logs")
 
-	// models.DB.PrepareBatch()
-	// models.DB.CreateInBatches(erlogs, q.BatchSize)
+	if err != nil {
+		fmt.Printf("%v", err)
+		return err
+	}
 
 	q.logs.Clear()
 

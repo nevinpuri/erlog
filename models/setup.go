@@ -2,9 +2,7 @@ package models
 
 import (
 	"context"
-	"fmt"
 	"net"
-	"os"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -13,9 +11,22 @@ import (
 var CTX context.Context
 var Conn clickhouse.Conn
 var dialCount int32
-// var DB *gorm.DB
 
-func Connect() {
+var SetupTable = `create table if not exists er_logs (
+    Id              UUID,
+    Timestamp       Int64,
+    ServiceName     String,
+    StringKeys     Array(String),
+    StringValues   Array(String),
+    NumberKeys     Array(String),
+    NumberValues   Array(Float64),
+    BoolKeys       Array(String),
+    BoolValues     Array(Bool)
+) Engine MergeTree()
+PARTITION BY toDate(Timestamp)
+ORDER BY toUnixTimestamp(Timestamp)`
+
+func Connect() error {
 	CTX = context.Background()
 	conn, err := clickhouse.Open(&clickhouse.Options{
 		Addr: []string{"127.0.0.1:19000"},
@@ -47,11 +58,12 @@ func Connect() {
 	})
 
 	if err != nil {
-		fmt.Printf("%s\n", err)
-		os.Exit(1)
+		return err
 	}
 
 	Conn = conn
+
+	return nil
 }
 
 // todo: make this actually check if the db is connected

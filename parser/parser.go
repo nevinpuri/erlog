@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/valyala/fastjson"
 )
 
@@ -12,9 +13,21 @@ import (
 func ParseJson(value *fastjson.Value) (models.ErLog, error) {
 	key := ""
 	erlog := models.ErLog{}
-	ParseValue(value, &key, &erlog)
+	erlog.Id = uuid.New()
 
-	return models.ErLog{}, nil
+	timestamp := value.GetInt("timestamp")
+
+	if timestamp != 0 {
+		erlog.Timestamp = int64(timestamp)
+	}
+
+	err := ParseValue(value, &key, &erlog)
+
+	if err != nil {
+		return models.ErLog{}, err
+	}
+
+	return erlog, nil
 }
 
 func ParseValue(value *fastjson.Value, key *string, erlog *models.ErLog) error {
@@ -48,9 +61,13 @@ func ParseValue(value *fastjson.Value, key *string, erlog *models.ErLog) error {
 		break
 	case fastjson.TypeString:
 		// use MarshalTo for speed
-		var dst []byte
 
-		value.MarshalTo(dst)
+		// no idea what marshalto does except for its faster than string
+		dst, err := value.StringBytes()
+
+		if err != nil {
+			return err
+		}
 
 		erlog.StringKeys = append(erlog.StringKeys, *key)
 		erlog.StringValues = append(erlog.StringValues, string(dst))
@@ -58,6 +75,10 @@ func ParseValue(value *fastjson.Value, key *string, erlog *models.ErLog) error {
 		fmt.Printf("Type: str, key: %s, val: %s\n", *key, string(dst))
 		break
 	case fastjson.TypeNumber:
+		if *key == "timestamp" {
+			break
+		}
+
 		num, err := value.Float64()
 
 		if err != nil {
