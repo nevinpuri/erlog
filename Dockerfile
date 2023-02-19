@@ -1,6 +1,10 @@
 FROM golang:1.20.0-alpine
 
+ENV CGO_ENABLED=1
+
 WORKDIR /app
+
+RUN apk add gcc musl-dev
 
 COPY go.mod .
 
