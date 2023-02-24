@@ -60,12 +60,8 @@ func main() {
 				"error": err.Error(),
 			})
 			return
+		
 		}
-
-		// trimmed := strings.TrimSpace(string(data))
-
-		// c.JSON(http.StatusOK, trimmed)
-		// return
 
 		buffer := new(bytes.Buffer)
 		err = json.Compact(buffer, data)
@@ -77,8 +73,6 @@ func main() {
 			return
 		}
 
-		// fmt.Printf("%#v", string(buffer.Bytes()))
-
 		err = queue.Append(buffer.Bytes())
 
 		if err != nil {
@@ -89,6 +83,30 @@ func main() {
 		}
 
 		c.Status(200)
+	})
+
+	type SearchRequestBody struct {
+		Query string `json:"query" binding:"required"`
+	}
+
+	r.POST("/search", func (c *gin.Context) {
+		var requestBody SearchRequestBody
+
+		if err := c.BindJSON(&requestBody); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+
+		// rows, err := models.Conn.Query(models.CTX, "SELECT * FROM er_logs WHERE indexOf(StringNames, ?) > 0", requestBody.Query)
+
+		// if err != nil {
+		// 	c.JSON(http.StatusBadRequest, gin.H{
+		// 		"error": err.Error(),
+		// 	})
+		// 	return
+		// }
 	})
 
 	log.Print(r.Run())
