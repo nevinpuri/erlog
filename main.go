@@ -40,9 +40,6 @@ func main() {
 
 	go queue.Run()
 
-	// todo: make queue take channel and return OK when it's started running
-	// so we can block here and wait for the queue to start
-
 	r := gin.Default()
 	r.Use(cors.Default())
 	r.GET("/", func(c *gin.Context) {
