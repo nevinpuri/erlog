@@ -17,6 +17,7 @@ type Queue struct{
 	timeout	int
 	ch chan models.ErLog
 	closeCh chan bool
+	pool fastjson.ParserPool
 	timer *time.Timer
 	logs asynclist.AsyncList
 }
@@ -31,6 +32,7 @@ func New(batchSize int, timeout int) Queue {
 		ch: make(chan models.ErLog),
 		closeCh: make(chan bool),
 		logs: asynclist.New(batchSize),
+		pool: fastjson.ParserPool{},
 		timer: time.NewTimer(time.Millisecond * time.Duration(timeout)),
 		timeout:timeout,
 	}
@@ -92,11 +94,14 @@ func (q *Queue) Append(log []byte) error {
 	// }
 
 	// todo: instead of using fastjson.parsebytes, use parserpool
-	val, err := fastjson.ParseBytes(log)
+	p := q.pool.Get()
+	val, err := p.ParseBytes(log)
 
 	if err != nil {
 		return err
 	}
+
+	q.pool.Put(p)
 
 	// ideally this should be an object so just get the object here but it really doesn't matter for now
 	erlog, err := parser.ParseJson(val)
@@ -105,9 +110,6 @@ func (q *Queue) Append(log []byte) error {
 		return err
 	}
 
-	// we don't actually care about the value of js
-	// we just care that it's valid
-	
 	q.ch <- erlog
 
 	return nil
