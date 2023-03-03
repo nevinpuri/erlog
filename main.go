@@ -60,6 +60,7 @@ func main() {
 				"error": err.Error(),
 			})
 			return
+		
 		}
 
 		buffer := new(bytes.Buffer)
