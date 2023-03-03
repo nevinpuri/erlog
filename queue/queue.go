@@ -91,6 +91,7 @@ func (q *Queue) Append(log []byte) error {
 	// 	return err
 	// }
 
+	// todo: instead of using fastjson.parsebytes, use parserpool
 	val, err := fastjson.ParseBytes(log)
 
 	if err != nil {

@@ -62,11 +62,6 @@ func main() {
 			return
 		}
 
-		// trimmed := strings.TrimSpace(string(data))
-
-		// c.JSON(http.StatusOK, trimmed)
-		// return
-
 		buffer := new(bytes.Buffer)
 		err = json.Compact(buffer, data)
 
@@ -76,8 +71,6 @@ func main() {
 			})
 			return
 		}
-
-		// fmt.Printf("%#v", string(buffer.Bytes()))
 
 		err = queue.Append(buffer.Bytes())
 
@@ -89,6 +82,19 @@ func main() {
 		}
 
 		c.Status(200)
+	})
+
+	r.POST("/logs", func (c *gin.Context) {
+		var logs []models.ErLog
+
+		if err := models.Conn.Select(models.CTX, &logs, "SELECT * FROM er_logs"); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, logs)
 	})
 
 	log.Print(r.Run())
