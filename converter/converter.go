@@ -2,7 +2,6 @@ package converter
 
 import (
 	"erlog/models"
-	"fmt"
 
 	"github.com/valyala/fastjson"
 )
@@ -75,8 +74,7 @@ func Convert(erlog models.ErLog) error {
 }
 
 // todo: add dest
-func ConvertBool(erlog models.ErLog) {
-	obj := fastjson.Object{}
+func ConvertBool(erlog models.ErLog, obj *fastjson.Object) {
 	arena := fastjson.Arena{}
 
 	for i, key := range erlog.BoolKeys {
@@ -111,5 +109,5 @@ func ConvertBool(erlog models.ErLog) {
 		}
 	}
 
-	fmt.Printf("%v\n", obj.String())
+	// fmt.Printf("%v\n", obj.String())
 }
