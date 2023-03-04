@@ -17,8 +17,21 @@ func New() Converter {
 }
 
 func (c Converter) Convert(erlog models.ErLog) (fastjson.Object, error) {
-	var err error
+	// get all the other metadata from this, like timestamp and id
+	arena := c.pool.Get()
 	obj := fastjson.Object{}
+
+	var err error
+
+	id := arena.NewString(erlog.Id.String())
+	obj.Set("id", id)
+
+	serviceName := arena.NewString(erlog.ServiceName)
+	obj.Set("serviceName", serviceName)
+
+	timestamp := arena.NewNumberFloat64(float64(erlog.Timestamp))
+	obj.Set("timestamp", timestamp)
+
 	err = c.ConvertString(erlog, &obj)
 
 	if err != nil {

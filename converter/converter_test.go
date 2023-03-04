@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/valyala/fastjson"
 )
@@ -45,8 +46,17 @@ func TestConvertString(t *testing.T) {
 
 func TestConvert(t *testing.T) {
 	converter := converter.New()
+	uid, err := uuid.Parse("7596cc99-25b3-476e-9b92-4584be4b6478")
+
+	if err != nil {
+		fmt.Printf("%v\n", err.Error())
+		t.Fail()
+	}
 
 	erlog := models.ErLog{
+		Id: uid,
+		Timestamp: 123123,
+		ServiceName: "test_service",
 		StringKeys: []string{"testStr", "testStr", "test2Str", "testStr"},
 		StringValues: []string{"hi", "hi2", "bye", "hi3"},
 		NumberKeys: []string{"testNum", "testNum", "test2Num", "testNum"},
@@ -63,5 +73,5 @@ func TestConvert(t *testing.T) {
 	}
 
 	fmt.Printf("%v\n", obj.String())
-	assert.Equal(t, obj.String(), "{\"testStr\":[\"hi\",\"hi2\",\"hi3\"],\"test2Str\":\"bye\",\"testNum\":[2,3.2,5],\"test2Num\":4,\"testBool\":[true,false,true],\"test2Bool\":false}")
+	assert.Equal(t, obj.String(),"{\"id\":\"7596cc99-25b3-476e-9b92-4584be4b6478\",\"serviceName\":\"test_service\",\"timestamp\":123123,\"testStr\":[\"hi\",\"hi2\",\"hi3\"],\"test2Str\":\"bye\",\"testNum\":[2,3.2,5],\"test2Num\":4,\"testBool\":[true,false,true],\"test2Bool\":false}")
 }
