@@ -7,6 +7,6 @@ import (
 )
 
 func TestConvertBool(t *testing.T) {
-	erlog := models.ErLog{BoolKeys: []string{"test", "test2"}, BoolValues: []bool{true, false}}
+	erlog := models.ErLog{BoolKeys: []string{"test", "test", "test2", "test"}, BoolValues: []bool{true, false, false, true}}
 	converter.ConvertBool(erlog)
 }

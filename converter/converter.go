@@ -89,7 +89,26 @@ func ConvertBool(erlog models.ErLog) {
 			val = arena.NewFalse()
 		}
 
-		obj.Set(key, val)
+		if cval := obj.Get(key); cval != nil {
+			// then an object exists
+			switch cval.Type() {
+			case fastjson.TypeTrue, fastjson.TypeFalse:
+				arr := arena.NewArray()
+
+				// first we append the current val
+				arr.SetArrayItem(0, cval)
+				// then the new value found
+				arr.SetArrayItem(1, val)
+				obj.Set(key, arr)
+			case  fastjson.TypeArray:
+				arr, _ := cval.Array()
+				l := len(arr)
+				cval.SetArrayItem(l, val)
+				obj.Set(key, cval)
+			}
+		} else {
+			obj.Set(key, val)
+		}
 	}
 
 	fmt.Printf("%v\n", obj.String())
