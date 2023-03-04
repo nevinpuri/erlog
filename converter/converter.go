@@ -6,76 +6,43 @@ import (
 	"github.com/valyala/fastjson"
 )
 
-func Convert(erlog models.ErLog) error {
-	// todo: use arenapool
-	arena := fastjson.Arena{}
+type Converter struct {
+	pool fastjson.ArenaPool
+}
+
+func New() Converter {
+	return Converter {
+		pool: fastjson.ArenaPool{},
+	}
+}
+
+func (c Converter) Convert(erlog models.ErLog) (fastjson.Object, error) {
+	var err error
 	obj := fastjson.Object{}
+	err = c.ConvertString(erlog, &obj)
 
-	// for i, key := range erlog.BoolKeys {
-	// 	var val *fastjson.Value
-
-	// 	switch erlog.BoolValues[i] {
-	// 	case true:
-	// 		val = arena.NewTrue()
-	// 		break
-	// 	case false:
-	// 		val = arena.NewFalse()
-	// 		break
-	// 	}
-
-	// 	if cval := obj.Get(key); cval != nil {
-	// 		switch cval.Type() {
-	// 		case fastjson.TypeArray:
-	// 			arr, err := cval.Array()
-
-	// 			if err != nil {
-	// 				return err
-	// 			}
-
-	// 			length := len(arr)
-
-	// 			cval.SetArrayItem(length, val)
-
-	// 			break
-	// 		case fastjson.TypeTrue, fastjson.TypeFalse:
-	// 			break
-	// 		}
-
-	// 		arr := arena.NewArray()
-	// 		// arr, err := cval.Array()
-
-	// 		arr = append(arr, val)
-
-	// 		obj.Set(key, arr)
-
-	// 		// this is an array
-	// 	} else {
-	// 		obj.Set(key, val)
-	// 	}
-
-	// }
-
-	for i, key := range erlog.NumberKeys {
-		// probably check if the number can be an int, make it an int
-		val := arena.NewNumberFloat64(erlog.NumberValues[i])
-
-		obj.Set(key, val)
+	if err != nil {
+		return fastjson.Object{}, err
 	}
 
-	for i, key := range erlog.StringKeys {
-		// probably check if the number can be an int, make it an int
-		val := arena.NewNumberFloat64(erlog.NumberValues[i])
+	err = c.ConvertFloat(erlog, &obj)
 
-		obj.Set(key, val)
+	if err != nil {
+		return fastjson.Object{}, err
 	}
 
+	err = c.ConvertBool(erlog, &obj)
 
-	return nil
+	if err != nil {
+		return fastjson.Object{}, err
+	}
+
+	return obj, nil
 }
 
 // todo: add dest
-func ConvertBool(erlog models.ErLog, obj *fastjson.Object) {
-	arena := fastjson.Arena{}
+func (c Converter) ConvertBool(erlog models.ErLog, obj *fastjson.Object) error {
+	arena := c.pool.Get()
 
 	for i, key := range erlog.BoolKeys {
 		var val *fastjson.Value
@@ -99,7 +66,12 @@ func ConvertBool(erlog models.ErLog, obj *fastjson.Object) {
 				arr.SetArrayItem(1, val)
 				obj.Set(key, arr)
 			case  fastjson.TypeArray:
-				arr, _ := cval.Array()
+				arr, err := cval.Array()
+
+				if err != nil {
+					return err
+				}
+
 				l := len(arr)
 				cval.SetArrayItem(l, val)
 				obj.Set(key, cval)
@@ -109,5 +81,73 @@ func ConvertBool(erlog models.ErLog, obj *fastjson.Object) {
 		}
 	}
 
-	// fmt.Printf("%v\n", obj.String())
+	return nil
+}
+
+func (c Converter) ConvertFloat(erlog models.ErLog, obj *fastjson.Object) error {
+	arena := c.pool.Get()
+
+	for i, key := range erlog.NumberKeys {
+		floatVal := erlog.NumberValues[i]
+		val := arena.NewNumberFloat64(floatVal)
+
+		if cval := obj.Get(key); cval != nil {
+			switch cval.Type() {
+			case fastjson.TypeNumber:
+				arr := arena.NewArray()
+
+				arr.SetArrayItem(0, cval)
+				arr.SetArrayItem(1, val)
+				obj.Set(key, arr)
+			case fastjson.TypeArray:
+				arr, err := cval.Array()
+
+				if err != nil {
+					return err
+				}
+
+				l := len(arr)
+				cval.SetArrayItem(l, val)
+				obj.Set(key, cval)
+			}
+		} else {
+			obj.Set(key, val)
+		}
+	}
+
+	return nil
+}
+
+func (c Converter) ConvertString(erlog models.ErLog, obj *fastjson.Object) error {
+	arena := c.pool.Get()
+
+	for i, key := range erlog.StringKeys {
+		strVal := erlog.StringValues[i]
+		val := arena.NewString(strVal)
+
+		if cval := obj.Get(key); cval != nil {
+			switch cval.Type() {
+			case fastjson.TypeString:
+				arr := arena.NewArray()
+
+				arr.SetArrayItem(0, cval)
+				arr.SetArrayItem(1, val)
+				obj.Set(key, arr)
+			case fastjson.TypeArray:
+				arr, err := cval.Array()
+
+				if err != nil {
+					return err
+				}
+
+				l := len(arr)
+				cval.SetArrayItem(l, val)
+				obj.Set(key, cval)
+			}
+		} else {
+			obj.Set(key, val)
+		}
+	}
+
+	return nil
 }
