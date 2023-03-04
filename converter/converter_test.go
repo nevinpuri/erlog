@@ -11,6 +11,16 @@ import (
 	"github.com/valyala/fastjson"
 )
 
+func TestConvertObj(t *testing.T) {
+	obj := fastjson.Object{}
+	converter := converter.New()
+
+	erlog := models.ErLog{BoolKeys: []string{"test.hi", "test.hi", "test2", "test"}, BoolValues: []bool{true, false, false, true}}
+	converter.ConvertBool(erlog, &obj)
+
+	fmt.Printf("%v\n", obj.String())
+}
+
 func TestConvertBool(t *testing.T) {
 	obj := fastjson.Object{}
 	converter := converter.New()

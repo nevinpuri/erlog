@@ -10,7 +10,9 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/rs/zerolog/log"
+	"github.com/valyala/fastjson"
 
+	"erlog/converter"
 	"erlog/models"
 	"erlog/queue"
 
@@ -85,6 +87,9 @@ func main() {
 	r.POST("/logs", func (c *gin.Context) {
 		var logs []models.ErLog
 
+		// todo: make this application wide (maybe)
+		converter := converter.New()
+
 		if err := models.Conn.Select(models.CTX, &logs, "SELECT * FROM er_logs"); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
@@ -92,7 +97,24 @@ func main() {
 			return
 		}
 
-		c.JSON(http.StatusOK, logs)
+		var objs []fastjson.Object
+
+		for _, log := range logs {
+			obj, err := converter.Convert(log)
+
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{
+					"error": err.Error(),
+				})
+				return
+			}
+
+			objs = append(objs, obj)
+		}
+
+		fmt.Printf("%v\n", len(objs))
+
+		c.JSON(http.StatusOK, objs)
 	})
 
 	log.Print(r.Run())
