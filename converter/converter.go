@@ -2,6 +2,7 @@ package converter
 
 import (
 	"erlog/models"
+	"strings"
 
 	"github.com/valyala/fastjson"
 )
@@ -136,35 +137,53 @@ func (c Converter) ConvertString(erlog models.ErLog, obj *fastjson.Object) error
 
 	for i, key := range erlog.StringKeys {
 		strVal := erlog.StringValues[i]
-		val := arena.NewString(strVal)
+		objPaths := strings.Split(strVal, ".")
 
-		if cval := obj.Get(key); cval != nil {
-			switch cval.Type() {
-			case fastjson.TypeString:
-				arr := arena.NewArray()
-
-				arr.SetArrayItem(0, cval)
-				arr.SetArrayItem(1, val)
-				obj.Set(key, arr)
-			case fastjson.TypeArray:
-				arr, err := cval.Array()
-
-				if err != nil {
-					return err
-				}
-
-				l := len(arr)
-				cval.SetArrayItem(l, val)
-				obj.Set(key, cval)
-			}
+		if len(objPaths) == 1 {
+			SetStringKey(key, strVal, arena, obj)
 		} else {
-			obj.Set(key, val)
 		}
 	}
 
 	return nil
 }
 
+func CreateRecursiveObjects(base *fastjson.Object, keys []string) {
+	curChild := base
+
+	for i, child := range keys {
+	}
+}
+
+// returns parent, new child object which has been edited onto parent
+func SetStringKey(key string, strVal string, arena *fastjson.Arena, obj *fastjson.Object) error {
+	val := arena.NewString(strVal)
+
+	if cval := obj.Get(key); cval != nil {
+		switch cval.Type() {
+		case fastjson.TypeString:
+			arr := arena.NewArray()
+
+			arr.SetArrayItem(0, cval)
+			arr.SetArrayItem(1, val)
+			obj.Set(key, arr)
+		case fastjson.TypeArray:
+			arr, err := cval.Array()
+
+			if err != nil {
+				return err
+			}
+
+			l := len(arr)
+			cval.SetArrayItem(l, val)
+			obj.Set(key, cval)
+		}
+	} else {
+		obj.Set(key, val)
+	}	
+
+	return nil
+}
 
 // returns prefix, rest_of_string (without leading .)
 func ConsumeParent(str string) (string, string) {
