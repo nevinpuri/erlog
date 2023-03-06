@@ -11,6 +11,13 @@ import (
 	"github.com/valyala/fastjson"
 )
 
+func TestConsumeParent(t *testing.T) {
+	str := "myobject"
+	prefix, str := converter.ConsumeParent(str)
+
+	fmt.Printf("%v - %v\n", prefix, str)
+}
+
 func TestConvertObj(t *testing.T) {
 	obj := fastjson.Object{}
 	converter := converter.New()

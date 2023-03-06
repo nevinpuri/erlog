@@ -78,7 +78,7 @@ func (c Converter) ConvertBool(erlog models.ErLog, obj *fastjson.Object) error {
 				// then the new value found
 				arr.SetArrayItem(1, val)
 				obj.Set(key, arr)
-			case  fastjson.TypeArray:
+			case fastjson.TypeArray:
 				arr, err := cval.Array()
 
 				if err != nil {
@@ -163,4 +163,27 @@ func (c Converter) ConvertString(erlog models.ErLog, obj *fastjson.Object) error
 	}
 
 	return nil
+}
+
+
+// returns prefix, rest_of_string (without leading .)
+func ConsumeParent(str string) (string, string) {
+	var idx int
+	var out string
+	var prefix string
+
+	for i, char := range str {
+		if char == '.' {
+			idx = i + 1
+			break
+		}
+	}
+
+	if idx == 0 {
+		return "", ""
+	}
+
+	out = str[idx:]
+	prefix = str[0:idx-1]
+	return prefix, out
 }
