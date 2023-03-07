@@ -6,7 +6,7 @@ import (
 	"github.com/valyala/fastjson"
 )
 
-func FormatObj(obj *fastjson.Object) (*fastjson.Object, error) {
+func FormatObj(obj fastjson.Object) (*fastjson.Object, error) {
 	arena := fastjson.Arena{}
 	out, err := arena.NewObject().Object()
 
