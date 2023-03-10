@@ -21,7 +21,8 @@ var SetupTable = `create table if not exists er_logs (
     NumberKeys     Array(String),
     NumberValues   Array(Float64),
     BoolKeys       Array(String),
-    BoolValues     Array(Bool)
+    BoolValues     Array(Bool),
+	Raw				String
 ) Engine MergeTree()
 PARTITION BY toDate(Timestamp)
 ORDER BY toUnixTimestamp(Timestamp)`

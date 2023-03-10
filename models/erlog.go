@@ -14,6 +14,7 @@ type ErLog struct {
 	NumberValues	[]float64		`json:"numberValues" ch:"NumberValues"`
 	BoolKeys		[]string		`json:"boolKeys" ch:"BoolKeys"`
 	BoolValues		[]bool			`json:"boolValues" ch:"BoolValues"`
+	Raw				string			`json:"raw"`
 }
 
 // why don't we get the clickhouse tables going first and then just use go to infer the types in code

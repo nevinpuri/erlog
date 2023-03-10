@@ -110,6 +110,8 @@ func (q *Queue) Append(log []byte) error {
 		return err
 	}
 
+	erlog.Raw = string(log)
+
 	q.ch <- erlog
 
 	return nil
