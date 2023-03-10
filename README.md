@@ -5,7 +5,7 @@
 
 ## Erlog
 
-ErLog is a minimalist log collection service. You can either forward structured logs from existing log libraries (eg: zerolog or winston), or use the collector to forward structured logs from stdout or stderr (coming soon).
+ErLog is a minimalist log collection service. You can either forward structured logs from existing log libraries (eg: zerolog or winston), or use any log collector to forward logs to erlog.
 
 ## Features
 
@@ -14,13 +14,9 @@ ErLog is a minimalist log collection service. You can either forward structured 
 
 ## Setup
 
-### Docker:
+### Docker-Compose:
 
-`docker run -p 8080:8080 nevin1901/erlog:latest`
-
-### From Binaries
-
-Download binaries at [releases](https://github.com/Nevin1901/erlog/releases) and run ./erlog
+Download the latest release and run `docker-compose up`
 
 ## Sending Logs
 
@@ -40,43 +36,22 @@ Example request body
 }
 ```
 
-Library specific examples coming soon
-
 ## Querying Logs
 
-The ErLog DB is literally just an sqlite file, so you can open it with any sqlite3 client. You can use any of sqlite3's [JSON](https://www.sqlite.org/json1.html) functions to query the `data` column in the `er_log` table.
-
-Example:
-
-```bash
-sqlite> select COUNT(*) from er_logs where json_extract(data, "$.level") = "error";
-56
-```
+No current way to query logs. API's Coming soon.
 
 ## Is it Fast?
 
-No official benchmarks yet, but I can currently get around 9000 log insertions per second locally. It isn't a ton but it should be enough for most small scale projects.
+No idea, but it uses clickhouse and an optimized way of storing logs so it should be fast enough.
 
 ## How Can I Scale it?
 
-I'm not sure of that now, but I'm developing a hosted version which auto scales based on your usage. If this sounds interesting to you, email me at me@nevin.cc and I'll set it up for you.
+Probably scale clickhouse. Or email me@nevin.cc and I'll set up a hosted service for you.
 
 ## OpenTelemtry Support
 
-Right now I think otel is too much of a pain to use in small/medium sized projects. For the insane amount of adoption, I feel the implementation is still really bad. If otel becomes easier to use or enough people ask for otel support, I'll add support for it.
-
-**Update** I think I'm going to support w3 trace context, which supports parent-id and span-id fields. This should support most features from otel (tracing across services), but wouldn't lock you into using opentelemetry with erlog.
-
-## Todo
-
-- Implement log searching functions
-- make docs on using erlog with specific libraries
-- Add Discord invite link
-- Add events which fire when logs aren't as usual, or logs deviate from a norm
-- Rewrite in rust elixir (I really want to try out live view + the concurrency)
-- Otel support (maybe)
-- Not important: make a color system where each specific tag gets a specific color (eg: level=debug gets green or whatever color it gets, message= get a different one, but this is all on the fly (doesn't have elif and all that preconfigured colors) and prefferably stays the same after reloading the app so you can get used to the colors. Probably colordb or something like that
+Coming later with the search feature.
 
 ## Known Limitations
 
-- Does not support arrays of objects (well it does, but they get transformed weird)
+- Does not support search on arrays of objects (well it does, but they get transformed weird)
