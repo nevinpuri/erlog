@@ -101,15 +101,6 @@ func main() {
 
 			json.Unmarshal([]byte(log.Raw), &out)
 
-			// obj, err := converter.Convert(log)
-
-			// if err != nil {
-			// 	c.JSON(http.StatusBadRequest, gin.H{
-			// 		"error": err.Error(),
-			// 	})
-			// 	return
-			// }
-
 			objs = append(objs, out)
 		}
 
