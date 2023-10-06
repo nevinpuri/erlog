@@ -1,6 +1,12 @@
-test.db
-test.db-shm
-test.db-wal
+/target
+logs.db
+logs.db.wal
+.venv/
+
+# Added by cargo
+#
+# already existing elements were commented out
+
+#/target
+
 .DS_Store
-main
-erlog

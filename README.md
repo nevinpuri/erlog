@@ -1,34 +1,20 @@
-[discord-shield]: https://img.shields.io/discord/1032709477054562334?label=Discord
-[discord-url]: https://discord.com/invite/7FtTBwRdQK
-
-[![Discord][discord-shield]][discord-url]
-
 ## Erlog
 
-ErLog is a minimalist log collection service. You can either forward structured logs from existing log libraries (eg: zerolog or winston), or use the collector to forward structured logs from stdout or stderr (coming soon).
+#### A Log Platform which runs on a $4 VPS
+
+![img1](./assets/1.png)
 
 ## Features
 
-- Simple log collection service which runs on a $4 vps
-- Works with your existing libraries
-
-## Setup
-
-### Docker:
-
-`docker run -p 8080:8080 nevin1901/erlog:latest`
-
-### From Binaries
-
-Download binaries at [releases](https://github.com/Nevin1901/erlog/releases) and run ./erlog
+- Ingest as many logs as you want from an http endpoint
+- Query logs with a query language
+- Runs on extremely low spec hardware
 
 ## Sending Logs
 
-ErLog supports json formatted logs. To send logs to erlog, send a post request to `localhost:8080` with whatever data you want to be saved.
+Just send a POST request to erlog with JSON
 
-Example request body
-
-```json
+```
 {
   "timestamp": "1675955819",
   "level": "debug",
@@ -40,39 +26,24 @@ Example request body
 }
 ```
 
-Library specific examples coming soon
+## Viewing Logs
 
-## Querying Logs
+![img2](./assets/2.png)
 
-The ErLog DB is literally just an sqlite file, so you can open it with any sqlite3 client. You can use any of sqlite3's [JSON](https://www.sqlite.org/json1.html) functions to query the `data` column in the `er_log` table.
+## Querying
 
-Example:
+Erql is extremely simple. Here are some examples
 
-```bash
-sqlite> select COUNT(*) from er_logs where json_extract(data, "$.level") = "error";
-56
-```
+Querying a field
+`field.bar = 'hi'`
+`field.bar = 3.0`
+`field.bar = false`
 
-## Is it Fast?
+And Statements
+`field.x = 3 and field.y = false`
 
-No official benchmarks yet, but I can currently get around 9000 log insertions per second locally. It isn't a ton but it should be enough for most small scale projects.
+Or Statements
+`field.x = 3 or field.y = false`
 
-## How Can I Scale it?
-
-I'm not sure of that now, but I'm developing a hosted version which auto scales based on your usage. If this sounds interesting to you, email me at me@nevin.cc and I'll set it up for you.
-
-## OpenTelemtry Support
-
-Right now I think otel is too much of a pain to use in small/medium sized projects. For the insane amount of adoption, I feel the implementation is still really bad. If otel becomes easier to use or enough people ask for otel support, I'll add support for it.
-
-**Update** I think I'm going to support w3 trace context, which supports parent-id and span-id fields. This should support most features from otel (tracing across services), but wouldn't lock you into using opentelemetry with erlog.
-
-## Todo
-
-- Implement log searching functions
-- make docs on using erlog with specific libraries
-- Add Discord invite link
-- Add events which fire when logs aren't as usual, or logs deviate from a norm
-- Rewrite in rust elixir (I really want to try out live view + the concurrency)
-- Otel support (maybe)
-- Not important: make a color system where each specific tag gets a specific color (eg: level=debug gets green or whatever color it gets, message= get a different one, but this is all on the fly (doesn't have elif and all that preconfigured colors) and prefferably stays the same after reloading the app so you can get used to the colors. Probably colordb or something like that
+Array index (this is getting improved)
+`field.arr.1 = 3 or field.arr.2 = false`
