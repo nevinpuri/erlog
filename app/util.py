@@ -1,4 +1,4 @@
-from collections import MutableMapping
+from collections.abc import MutableMapping
 
 
 def flatten(dictionary, parent_key=False, separator="."):
