@@ -9,13 +9,84 @@ from fastapi.middleware.cors import CORSMiddleware
 from util import flatten, isint, isfloat
 from query_builder import QueryBuilder
 from models import ErLog
+import os
+import threading
+
+# from sh import tail
+from async_tail import atail
+import asyncio
+
+# files = os.environ["LOGS"]
+
+if os.environ["LOGS"] == None:
+    print(
+        "ERROR: please set the 'LOGS' environment variable to a list of log files separated by a space"
+    )
+
+
+def insert_log(log):
+    try:
+        if log == "":
+            return False
+
+        l = json.loads(log)
+        flattened = flatten(l)
+        erlog = ErLog(log)
+        erlog.parse_log(flattened)
+
+        conn.execute(
+            "INSERT INTO erlogs VALUES (gen_random_uuid(), ?, ?, ?, ?, ?, ?, ?, ?)",
+            [
+                erlog._timestamp,
+                erlog._string_keys,
+                erlog._string_values,
+                erlog._bool_keys,
+                erlog._bool_values,
+                erlog._number_keys,
+                erlog._number_values,
+                erlog._raw_log,
+            ],
+        )
+    except Exception as e:
+        print("Encountered error:", e)
+
+
+async def read_from_file():
+    f = os.environ["LOGS"]
+    files = f.split(" ")
+    print(*files)
+    print(os.curdir)
+    async for line in atail("file1.txt"):
+        print(line)
+        # todo, get file name with it
+        insert_log(str(line[0]))
+
+    # while True:
+    #     print("hi")
+    #     # asyncio.subprocess.
+    #     await asyncio.sleep(2)
+    # for line in tail("-f", "file1.txt"):
+    #     print("hi")
+    #     print(line)
+
+
+# t1 = threading.Thread(target=read_from_file, args=(files,))
+# t1.start()
 
 conn = duckdb.connect("./logs.db")
 conn.execute(
     "CREATE TABLE IF NOT EXISTS erlogs (id UUID primary key, timestamp DOUBLE, string_keys string[], string_values string[], bool_keys string[], bool_values bool[], number_keys string[], number_values double[], raw_log string);"
 )
 
+# file1 file2.txt
 app = FastAPI()
+
+
+@app.on_event("startup")
+async def read_logs():
+    loop = asyncio.get_event_loop()
+    loop.create_task(read_from_file())
+
 
 origins = ["http://localhost", "http://localhost:59971", "*"]
 
@@ -110,3 +181,9 @@ async def log(request: Request):
         ],
     )
     return {"status": "OK"}
+
+
+# if __name__ == "__main__":
+#     import uvicorn
+
+#     uvicorn.run(app)

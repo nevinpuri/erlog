@@ -47,3 +47,8 @@ Or Statements
 
 Array index (this is getting improved)
 `field.arr.1 = 3 or field.arr.2 = false`
+
+## todo
+
+- stop log on 'reset_erlog' message
+- use https://github.com/jurismarches/luqum as query language
