@@ -11,10 +11,13 @@ from query_builder import QueryBuilder
 from models import ErLog
 import os
 import threading
+from luqum.parser import parser
 
 # from sh import tail
 from async_tail import atail
 import asyncio
+
+print(repr(parser.parse('title:"foo bar"')))
 
 # files = os.environ["LOGS"]
 
