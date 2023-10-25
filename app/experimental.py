@@ -9,6 +9,10 @@ class QBuilder:
         self.added = False
 
     def parse(self, q):
+        if q == "":
+            self.query += " ORDER BY timestamp DESC"
+            return
+
         f = parser.parse(q)
         print(type(f))
 
@@ -20,6 +24,7 @@ class QBuilder:
             self.parse_searchfield(f)
             pass
 
+        self.query += " ORDER BY timestamp DESC"
         print(self.query, self.params)
 
     def parse_searchfield(self, s):
@@ -45,7 +50,8 @@ class QBuilder:
             self.query += " WHERE "
             self.added = True
 
-        self.query += "list_contains({}, ?)".format(kf)
+        self.query += "list_contains({}, ?) OR list_contains({}, ?)".format(kf, kv)
+        self.params.append(val)
         self.params.append(val)
 
     def parse_phrase(self, p):
@@ -56,8 +62,11 @@ class QBuilder:
             self.query += " WHERE "
             self.added = True
 
-        self.query += "list_contains({}, ?)".format(kf)
+        self.query += "list_contains({}, ?) OR list_contains({}, ?)".format(kf, kv)
         self.params.append(val)
+        self.params.append(val)
+        # self.query += "list_contains({}, ?)".format(kf)
+        # self.params.append(val)
 
     def parse_value(self, val):
         v = self.parse_float(val)
@@ -94,7 +103,8 @@ class QBuilder:
             return None
 
 
-QBuilder().parse("name.first:foo")
+if __name__ == "__main__":
+    QBuilder().parse("name.first:foo")
 # print(type(f))
 # print(dir(f))
 # print(f.value)

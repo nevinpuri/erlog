@@ -41,13 +41,22 @@ function App() {
   }, []);
 
   useEffect(() => {
-    console.log("Query", query);
+    const doWork = async () => {
+      console.log("Query", query);
+      console.log("refreshing");
+      console.log(v);
+      const { logs, err } = await fetchLogs(query);
+      setLogs(logs);
+      setErr(err);
+    };
+
+    doWork();
   }, [query]);
 
   async function refreshLogs() {
     console.log("refreshing");
     console.log(v);
-    const { logs, err } = await fetchLogs(v);
+    const { logs, err } = await fetchLogs(query);
     setLogs(logs);
     setErr(err);
   }

@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from util import flatten, isint, isfloat
 from query_builder import QueryBuilder
 from models import ErLog
+from experimental import QBuilder
 import os
 import threading
 from luqum.parser import parser
@@ -17,7 +18,7 @@ from luqum.parser import parser
 from async_tail import atail
 import asyncio
 
-print(repr(parser.parse('title:"foo bar"')))
+# print(repr(parser.parse('title:"foo bar"')))
 
 # files = os.environ["LOGS"]
 
@@ -110,26 +111,30 @@ async def root(request: Request):
 
     user_query = body["query"]
 
-    q = QueryBuilder()
-    try:
-        p = erlog_utils.parse_input(user_query)
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid query")
+    q = QBuilder()
+    q.parse(user_query)
+    query, params = q.query, q.params
 
-    if len(p.__getattribute__("and")) > 0:
-        a = p.__getattribute__("and")
-        keyword = "and"
-    elif len(p.__getattribute__("or")) > 0:
-        a = p.__getattribute__("or")
-        keyword = "or"
-    else:
-        a = [p.none]
-        keyword = ""
+    # q = QueryBuilder()
+    # try:
+    #     p = erlog_utils.parse_input(user_query)
+    # except Exception:
+    #     raise HTTPException(status_code=400, detail="Invalid query")
 
-    q.add(a, keyword)
+    # if len(p.__getattribute__("and")) > 0:
+    #     a = p.__getattribute__("and")
+    #     keyword = "and"
+    # elif len(p.__getattribute__("or")) > 0:
+    #     a = p.__getattribute__("or")
+    #     keyword = "or"
+    # else:
+    #     a = [p.none]
+    #     keyword = ""
 
-    query, params = q.get_query_and_params()
-    print(query, params)
+    # q.add(a, keyword)
+
+    # query, params = q.get_query_and_params()
+    # print(query, params)
 
     l = conn.execute(query, params).fetchall()
 
