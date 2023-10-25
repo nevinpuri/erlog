@@ -9,6 +9,7 @@ class QBuilder:
         self.added = False
 
     def parse(self, q):
+        print(dir(q))
         if q == "":
             self.query += " ORDER BY timestamp DESC"
             return
@@ -31,7 +32,7 @@ class QBuilder:
         fname = s.name
         fval = s.children[0]
 
-        kf, kv, val = self.parse_value(fval.value)
+        kf, kv, val = self.parse_value(fval.value.replace("'", "").replace('"', ""))
         if self.added == False:
             self.query += " WHERE "
             self.added = True
@@ -104,7 +105,7 @@ class QBuilder:
 
 
 if __name__ == "__main__":
-    QBuilder().parse("name.first:foo")
+    QBuilder().parse('this_has:"custom timestamp support"')
 # print(type(f))
 # print(dir(f))
 # print(f.value)
