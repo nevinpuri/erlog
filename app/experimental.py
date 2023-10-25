@@ -78,8 +78,8 @@ class QBuilder:
 
         v = self.parse_bool(val)
         if v != None:
-            kf = "number_keys"
-            kv = "number_values"
+            kf = "bool_keys"
+            kv = "bool_values"
             return kf, kv, v
 
         v = val
@@ -98,14 +98,18 @@ class QBuilder:
         if val.lower() != "true" and val.lower() != "false":
             return None
         try:
-            val = bool(val)
-            return val
+            if val.lower() == "true":
+                return True
+            else:
+                return False
+            # val = bool(vala
+            # return val
         except Exception:
             return None
 
 
 if __name__ == "__main__":
-    QBuilder().parse('this_has:"custom timestamp support"')
+    QBuilder().parse("hey.whatever:true")
 # print(type(f))
 # print(dir(f))
 # print(f.value)
