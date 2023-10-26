@@ -1,5 +1,5 @@
 from luqum.parser import parser
-from luqum.tree import SearchField, Word, Phrase
+from luqum.tree import SearchField, Word, Phrase, From, To
 
 
 class QBuilder:
@@ -9,14 +9,23 @@ class QBuilder:
         self.added = False
 
     def parse(self, q):
-        print(dir(q))
         if q == "":
             self.query += " ORDER BY timestamp DESC"
             return
 
         f = parser.parse(q)
-        print(type(f))
+        print(repr(f))
+        print(f.children[0].include)
+        print(dir(f.children[0].children[0]))
+        print(dir(f.children[0]))
+        self.parse_class(f)
 
+        self.query += " ORDER BY timestamp DESC"
+        print(self.query, self.params)
+
+    def parse_class(self, f):
+        if isinstance(f, From) or isinstance(f, To):
+            self.parse_op(f)
         if isinstance(f, Word):
             self.parse_word(f)
         elif isinstance(f, Phrase):
@@ -25,19 +34,39 @@ class QBuilder:
             self.parse_searchfield(f)
             pass
 
-        self.query += " ORDER BY timestamp DESC"
-        print(self.query, self.params)
+        pass
 
-    def parse_searchfield(self, s):
+    def parse_op(self, o):
+        """
+        Will return inner word
+        """
+        if isinstance(o, To):
+            op = "<"
+        else:
+            op = ">"
+
+        if o.include:
+            op += "="
+
+        print(repr(o.children[0]))
+        return op, o.children[0]
+
+    def parse_searchfield(self, s, op="="):
         fname = s.name
         fval = s.children[0]
+
+        if isinstance(fval, To) or isinstance(fval, From):
+            op, fval = self.parse_op(fval)
+            print(op)
+        else:
+            op = "="
 
         kf, kv, val = self.parse_value(fval.value.replace("'", "").replace('"', ""))
         if self.added == False:
             self.query += " WHERE "
             self.added = True
 
-        self.query += "{}[list_indexof({}, ?)] {} ?".format(kv, kf, "=")
+        self.query += "{}[list_indexof({}, ?)] {} ?".format(kv, kf, op)
         self.params.append(fname)
         self.params.append(val)
         # print(s.name, s.children)
@@ -109,7 +138,7 @@ class QBuilder:
 
 
 if __name__ == "__main__":
-    QBuilder().parse("hey.whatever:true")
+    QBuilder().parse("hey.whatever:<=100")
 # print(type(f))
 # print(dir(f))
 # print(f.value)
