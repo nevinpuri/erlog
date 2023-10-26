@@ -111,6 +111,14 @@ class QBuilder:
             op = "="
 
         kf, kv, val = self.parse_value(fval.value.replace("'", "").replace('"', ""))
+
+        if fname == "timestamp":
+            self.query += "timestamp {} ?".format(op)
+            self.params.append(val)
+            return
+
+        # also do this for parentId
+
         # if self.added == False:
         #     self.query += " WHERE "
         #     self.added = True
