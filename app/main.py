@@ -5,7 +5,7 @@ from fastapi import Request
 from pydantic import BaseModel
 import json
 from fastapi.middleware.cors import CORSMiddleware
-from util import flatten, isint, isfloat
+from util import flatten
 from query_builder import QueryBuilder
 from models import ErLog
 from experimental import QBuilder
@@ -17,15 +17,6 @@ from structlog import get_logger
 import ujson
 
 structlog.configure(processors=[structlog.processors.JSONRenderer()])
-
-# print(repr(parser.parse('title:"foo bar"')))
-
-# files = os.environ["LOGS"]
-
-# if os.environ["LOGS"] == None:
-#     print(
-#         "ERROR: please set the 'LOGS' environment variable to a list of log files separated by a space"
-#     )
 
 
 def insert_log(log):
@@ -59,31 +50,16 @@ def insert_log(log):
 async def read_from_file():
     f = os.environ["LOGS"]
     files = f.split(" ")
-    # print(*files)
-    # print(os.curdir)
     async for line in atail("file1.txt"):
-        # print(line)
         # todo, get file name with it
         insert_log(str(line[0]))
 
-    # while True:
-    #     print("hi")
-    #     # asyncio.subprocess.
-    #     await asyncio.sleep(2)
-    # for line in tail("-f", "file1.txt"):
-    #     print("hi")
-    #     print(line)
-
-
-# t1 = threading.Thread(target=read_from_file, args=(files,))
-# t1.start()
 
 conn = duckdb.connect("./logs.db")
 conn.execute(
     "CREATE TABLE IF NOT EXISTS erlogs (id UUID primary key, timestamp DOUBLE, string_keys string[], string_values string[], bool_keys string[], bool_values bool[], number_keys string[], number_values double[], raw_log string);"
 )
 
-# file1 file2.txt
 app = FastAPI()
 
 
@@ -117,31 +93,7 @@ async def root(request: Request):
 
     q = QBuilder()
     q.parse(user_query)
-    logger = get_logger()
     query, params = q.query, q.params
-
-    logger.info("processing query", query=query)
-
-    # q = QueryBuilder()
-    # try:
-    #     p = erlog_utils.parse_input(user_query)
-    # except Exception:
-    #     raise HTTPException(status_code=400, detail="Invalid query")
-
-    # if len(p.__getattribute__("and")) > 0:
-    #     a = p.__getattribute__("and")
-    #     keyword = "and"
-    # elif len(p.__getattribute__("or")) > 0:
-    #     a = p.__getattribute__("or")
-    #     keyword = "or"
-    # else:
-    #     a = [p.none]
-    #     keyword = ""
-
-    # q.add(a, keyword)
-
-    # query, params = q.get_query_and_params()
-    # print(query, params)
 
     l = conn.execute(query, params).fetchall()
 
@@ -196,9 +148,3 @@ async def log(request: Request):
         ],
     )
     return {"status": "OK"}
-
-
-# if __name__ == "__main__":
-#     import uvicorn
-
-#     uvicorn.run(app)
