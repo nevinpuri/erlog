@@ -1,14 +1,11 @@
 import duckdb
-import sys
 from fastapi import FastAPI, HTTPException
 from fastapi import Request
-from pydantic import BaseModel
 import json
 from fastapi.middleware.cors import CORSMiddleware
 from util import flatten
-from query_builder import QueryBuilder
 from models import ErLog
-from experimental import QBuilder
+from app.query import QBuilder
 import os
 from async_tail import atail
 import asyncio
@@ -44,7 +41,6 @@ def insert_log(log):
         )
     except Exception as e:
         return
-        # print("Encountered error:", e)
 
 
 async def read_from_file():
