@@ -1,5 +1,14 @@
 from luqum.parser import parser
-from luqum.tree import SearchField, Word, Phrase, From, To
+from luqum.tree import (
+    SearchField,
+    Word,
+    Phrase,
+    From,
+    To,
+    AndOperation,
+    OrOperation,
+    Group,
+)
 
 
 class QBuilder:
@@ -15,15 +24,26 @@ class QBuilder:
 
         f = parser.parse(q)
         print(repr(f))
-        print(f.children[0].include)
-        print(dir(f.children[0].children[0]))
-        print(dir(f.children[0]))
+        # print(f.children[0].include)
+        # print(dir(f.children[0].children[0]))
+        # print(dir(f.children[0]))
+        self.query += " WHERE "
         self.parse_class(f)
+
+        # nothing was parsed
+        # if self.query.strip()[-5:] == "WHERE":
+        #     pass
 
         self.query += " ORDER BY timestamp DESC"
         print(self.query, self.params)
 
     def parse_class(self, f):
+        if isinstance(f, AndOperation):
+            self.parse_and(f)
+        if isinstance(f, OrOperation):
+            self.parse_or(f)
+        if isinstance(f, Group):
+            self.parse_group(f)
         if isinstance(f, From) or isinstance(f, To):
             self.parse_op(f)
         if isinstance(f, Word):
@@ -32,9 +52,6 @@ class QBuilder:
             self.parse_phrase(f)
         elif isinstance(f, SearchField):
             self.parse_searchfield(f)
-            pass
-
-        pass
 
     def parse_op(self, o):
         """
@@ -51,20 +68,52 @@ class QBuilder:
         print(repr(o.children[0]))
         return op, o.children[0]
 
-    def parse_searchfield(self, s, op="="):
+    def parse_group(self, g):
+        print("in group")
+        print(dir(g))
+        self.query += " ( "
+        for child in g.children:
+            self.parse_class(child)
+        self.query += " ) "
+        pass
+
+    def parse_range(self, r):
+        """
+        TODO: implement
+        """
+        pass
+
+    def parse_and(self, a):
+        self.query += " ( "
+        for i in range(len(a.children)):
+            self.parse_class(a.children[i])
+            if i != len(a.children) - 1:
+                self.query += " AND "
+
+        self.query += " ) "
+
+    def parse_or(self, a):
+        self.query += " ( "
+        for i in range(len(a.children)):
+            self.parse_class(a.children[i])
+            if i != len(a.children) - 1:
+                self.query += " OR "
+
+        self.query += " ) "
+
+    def parse_searchfield(self, s):
         fname = s.name
         fval = s.children[0]
 
         if isinstance(fval, To) or isinstance(fval, From):
             op, fval = self.parse_op(fval)
-            print(op)
         else:
             op = "="
 
         kf, kv, val = self.parse_value(fval.value.replace("'", "").replace('"', ""))
-        if self.added == False:
-            self.query += " WHERE "
-            self.added = True
+        # if self.added == False:
+        #     self.query += " WHERE "
+        #     self.added = True
 
         self.query += "{}[list_indexof({}, ?)] {} ?".format(kv, kf, op)
         self.params.append(fname)
@@ -76,9 +125,9 @@ class QBuilder:
     def parse_word(self, w):
         print(w.value)
         kf, kv, val = self.parse_value(w.value)
-        if self.added == False:
-            self.query += " WHERE "
-            self.added = True
+        # if self.added == False:
+        #     self.query += " WHERE "
+        #     self.added = True
 
         self.query += "list_contains({}, ?) OR list_contains({}, ?)".format(kf, kv)
         self.params.append(val)
@@ -88,9 +137,9 @@ class QBuilder:
         print(dir(p))
         print(p.value)
         kf, kv, val = self.parse_value(p.value.replace("'", "").replace('"', ""))
-        if self.added == False:
-            self.query += " WHERE "
-            self.added = True
+        # if self.added == False:
+        #     self.query += " WHERE "
+        #     self.added = True
 
         self.query += "list_contains({}, ?) OR list_contains({}, ?)".format(kf, kv)
         self.params.append(val)
@@ -138,7 +187,7 @@ class QBuilder:
 
 
 if __name__ == "__main__":
-    QBuilder().parse("hey.whatever:<=100")
+    QBuilder().parse('event:LOGIN OR (event:LOGIN AND store_whatever:"data you want")')
 # print(type(f))
 # print(dir(f))
 # print(f.value)

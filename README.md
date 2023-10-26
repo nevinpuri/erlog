@@ -52,3 +52,4 @@ Array index (this is getting improved)
 
 - stop log on 'reset_erlog' message
 - use https://github.com/jurismarches/luqum as query language
+- get support for traces using `traceId` and `duration` or `start` `end` in ms

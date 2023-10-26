@@ -22,10 +22,10 @@ import asyncio
 
 # files = os.environ["LOGS"]
 
-if os.environ["LOGS"] == None:
-    print(
-        "ERROR: please set the 'LOGS' environment variable to a list of log files separated by a space"
-    )
+# if os.environ["LOGS"] == None:
+#     print(
+#         "ERROR: please set the 'LOGS' environment variable to a list of log files separated by a space"
+#     )
 
 
 def insert_log(log):
@@ -88,6 +88,9 @@ app = FastAPI()
 
 @app.on_event("startup")
 async def read_logs():
+    if not "LOGS" in os.environ:
+        return
+
     loop = asyncio.get_event_loop()
     loop.create_task(read_from_file())
 
