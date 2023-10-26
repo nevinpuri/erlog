@@ -4,19 +4,19 @@ from fastapi import FastAPI, HTTPException
 from fastapi import Request
 from pydantic import BaseModel
 import json
-import erlog_utils
 from fastapi.middleware.cors import CORSMiddleware
 from util import flatten, isint, isfloat
 from query_builder import QueryBuilder
 from models import ErLog
 from experimental import QBuilder
 import os
-import threading
-from luqum.parser import parser
-
-# from sh import tail
 from async_tail import atail
 import asyncio
+import structlog
+from structlog import get_logger
+import ujson
+
+structlog.configure(processors=[structlog.processors.JSONRenderer()])
 
 # print(repr(parser.parse('title:"foo bar"')))
 
@@ -33,7 +33,7 @@ def insert_log(log):
         if log == "":
             return False
 
-        l = json.loads(log)
+        l = ujson.loads(log)
         flattened = flatten(l)
         erlog = ErLog(log)
         erlog.parse_log(flattened)
@@ -52,16 +52,17 @@ def insert_log(log):
             ],
         )
     except Exception as e:
-        print("Encountered error:", e)
+        return
+        # print("Encountered error:", e)
 
 
 async def read_from_file():
     f = os.environ["LOGS"]
     files = f.split(" ")
-    print(*files)
-    print(os.curdir)
+    # print(*files)
+    # print(os.curdir)
     async for line in atail("file1.txt"):
-        print(line)
+        # print(line)
         # todo, get file name with it
         insert_log(str(line[0]))
 
@@ -116,7 +117,10 @@ async def root(request: Request):
 
     q = QBuilder()
     q.parse(user_query)
+    logger = get_logger()
     query, params = q.query, q.params
+
+    logger.info("processing query", query=query)
 
     # q = QueryBuilder()
     # try:
