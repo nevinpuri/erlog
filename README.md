@@ -54,3 +54,12 @@ Array index (this is getting improved)
 - use https://github.com/jurismarches/luqum as query language
 - get support for traces using `parentId` and `duration` or `start` `end` in ms
 - default field shown will be event, and all other data will be shown in key=param
+- show parents whenever you click on a child
+- on log submit, if log level is error, then with id == parent_id field to be error=true
+- same thing with warning
+
+- for each log, make a call to the db with the info to try and merge the events together
+- or just do that on every other log call where whenver there's a new info you
+  merge it into the current log, and an error you merge into the corresponding error log
+
+  The idea is that if they both have the same parent id, do the merge

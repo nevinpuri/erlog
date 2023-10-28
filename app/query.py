@@ -20,7 +20,9 @@ class QBuilder:
     def parse(self, q, page):
         if q == "":
             # WHERE parent_id ISNULL
-            self.query += " ORDER BY timestamp DESC LIMIT 50 OFFSET ? "
+            self.query += (
+                " WHERE parent_id ISNULL ORDER BY timestamp DESC LIMIT 50 OFFSET ? "
+            )
             self.params.append(int(page * 50))
             return
 
