@@ -5,13 +5,14 @@ import json
 from fastapi.middleware.cors import CORSMiddleware
 from util import flatten
 from models import ErLog
-from app.query import QBuilder
+from query import QBuilder
 import os
 from async_tail import atail
 import asyncio
 import structlog
 from structlog import get_logger
 import ujson
+import uuid
 
 structlog.configure(processors=[structlog.processors.JSONRenderer()])
 
@@ -26,9 +27,20 @@ def insert_log(log):
         erlog = ErLog(log)
         erlog.parse_log(flattened)
 
+        if erlog._id == None:
+            erlog._id = uuid.uuid4()
+
+        print(erlog._id, erlog._parent_id, erlog._timestamp)
         conn.execute(
-            "INSERT INTO erlogs VALUES (gen_random_uuid(), ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO etest VALUES (?, ?, ?)",
+            [erlog._id, erlog._parent_id, erlog._timestamp],
+        )
+
+        conn.execute(
+            "INSERT INTO erlogs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             [
+                erlog._id,
+                erlog._parent_id,
                 erlog._timestamp,
                 erlog._string_keys,
                 erlog._string_values,
@@ -39,8 +51,12 @@ def insert_log(log):
                 erlog._raw_log,
             ],
         )
+
+        return True
     except Exception as e:
-        return
+        print("Exception")
+        print(e)
+        return False
 
 
 async def read_from_file():
@@ -53,7 +69,10 @@ async def read_from_file():
 
 conn = duckdb.connect("./logs.db")
 conn.execute(
-    "CREATE TABLE IF NOT EXISTS erlogs (id UUID primary key, timestamp DOUBLE, string_keys string[], string_values string[], bool_keys string[], bool_values bool[], number_keys string[], number_values double[], raw_log string);"
+    "CREATE TABLE IF NOT EXISTS erlogs (id UUID primary key, parent_id UUID, timestamp DOUBLE, string_keys string[], string_values string[], bool_keys string[], bool_values bool[], number_keys string[], number_values double[], raw_log string);"
+)
+conn.execute(
+    "CREATE TABLE IF NOT EXISTS etest (id UUID, parent_id UUID, timestamp DOUBLE)"
 )
 
 app = FastAPI()
@@ -62,6 +81,8 @@ app = FastAPI()
 @app.on_event("startup")
 async def read_logs():
     if not "LOGS" in os.environ:
+        logger = get_logger()
+        logger.info("No logs in os.environ", l=len(os.environ))
         return
 
     loop = asyncio.get_event_loop()
@@ -81,17 +102,49 @@ app.add_middleware(
 
 @app.post("/search")
 async def root(request: Request):
+    logger = get_logger()
+    id = str(uuid.uuid4())
+    logger.info("search request", id=id)
     body = await request.json()
-    if isinstance(body, str):
+    print(type(body))
+    if not isinstance(body, object) or isinstance(body, str):
+        logger.error("Invalid json", body=body, parent_id=id)
         raise HTTPException(status_code=400, detail="Invalid json")
 
+    print(body)
     user_query = body["query"]
+    page = body["page"]
+    if page == None:
+        page = 0
 
-    q = QBuilder()
-    q.parse(user_query)
-    query, params = q.query, q.params
+    print(page)
+    try:
+        p = int(page)
+    except Exception:
+        logger.error("Invalid page", status_code=400, page=page, parent_id=id)
+        raise HTTPException(status_code=400, detail="Page is invalid")
 
-    l = conn.execute(query, params).fetchall()
+    # todo: compress the log as much as possible to make it one giant
+    # log with the events when you do stuff like this
+    # logger.info("user query", user_query=user_query, parent_id=id)
+
+    try:
+        logger.info("building query", user_query=user_query, p=p, parent_id=id)
+        q = QBuilder()
+        q.parse(user_query, p)
+        query, params = q.query, q.params
+    except Exception as e:
+        logger.error("Failed building query", err=str(e))
+        raise HTTPException(status_code=400, detail="Failed building query")
+
+    # maybe put try catch
+
+    try:
+        logger.info("executing query", query=query, parent_id=id)
+        l = conn.execute(query, params).fetchall()
+    except Exception as e:
+        logger.error("Failed executing query", query=query, parent_id=id, err=str(e))
+        raise HTTPException(status_code=400, detail="Failed executing query")
 
     logs = []
     for log in l:
@@ -112,35 +165,62 @@ async def get_log(request: Request):
     if id is None:
         raise HTTPException(status_code=400, detail="Invalid json")
 
-    h = conn.execute("SELECT id, timestamp, raw_log from erlogs WHERE id = ?", [id])
+    h = conn.execute(
+        "SELECT id, parent_id, timestamp, raw_log from erlogs WHERE id = ?", [id]
+    )
     log = h.fetchone()
 
-    return {"id": log[0], "timestamp": log[1], "log": log[2]}
+    # print(log[])
+    # if log[1] != None:
+    c = conn.execute(
+        "SELECT id, parent_id, timestamp, raw_log from erlogs WHERE parent_id = ? ORDER BY timestamp ASC",
+        [id],
+    )
+
+    children = []
+    clogs = c.fetchall()
+    for c in clogs:
+        children.append({"id": c[0], "parent_id": c[1], "timestamp": c[2], "log": c[3]})
+        # print("hi")
+        # print(len(child))
+
+    print(children)
+
+    return {"id": log[0], "timestamp": log[2], "log": log[3], "children": children}
 
 
 @app.post("/")
 async def log(request: Request):
     body = await request.json()
-    erlog = ErLog(json.dumps(body))
+    s = ujson.dumps(body)
+    # erlog = ErLog(s)
+    # print(type(s))
+    print(s)
+    status = insert_log(s)
 
-    if isinstance(body, str):
-        raise HTTPException(status_code=400, detail="Invalid json")
+    # if isinstance(body, str):
+    #     raise HTTPException(status_code=400, detail="Invalid json")
 
-    flattened = flatten(body)
-    erlog.parse_log(flattened)
+    # flattened = flatten(body)
+    # erlog.parse_log(flattened)
 
-    # todo, use appender or add tis to a batch
-    conn.execute(
-        "INSERT INTO erlogs VALUES (gen_random_uuid(), ?, ?, ?, ?, ?, ?, ?, ?)",
-        [
-            erlog._timestamp,
-            erlog._string_keys,
-            erlog._string_values,
-            erlog._bool_keys,
-            erlog._bool_values,
-            erlog._number_keys,
-            erlog._number_values,
-            erlog._raw_log,
-        ],
-    )
-    return {"status": "OK"}
+    # # todo, use appender or add tis to a batch
+    # if erlog._id == None:
+    #     erlog._id = uuid.uuid4()
+
+    # conn.execute(
+    #     "INSERT INTO erlogs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    #     [
+    #         erlog._id,
+    #         erlog._timestamp,
+    #         erlog._parent_id,
+    #         erlog._string_keys,
+    #         erlog._string_values,
+    #         erlog._bool_keys,
+    #         erlog._bool_values,
+    #         erlog._number_keys,
+    #         erlog._number_values,
+    #         erlog._raw_log,
+    #     ],
+    # )
+    return {"status": status}

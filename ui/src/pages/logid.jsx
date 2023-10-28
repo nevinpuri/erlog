@@ -28,10 +28,40 @@ export function LogId() {
       <BackButton />
       <h1 className="text-lg font-medium">{timeConverter(log.timestamp)}</h1>
       <br />
-      <PrettyPrintJson data={JSON.parse(log.log)} />
+      <LogView data={JSON.parse(log.log)} />
+      {/* <PrettyPrintJson data={JSON.parse(log.log)} /> */}
+      <h1 className="font-normal text-lg my-2">Children</h1>
+      <div className="space-y-4">
+        {log.children.map((c) => (
+          <div>
+            <h1 className="text-lg font-medium">
+              {timeConverter(c.timestamp)}
+            </h1>
+            {/* <PrettyPrintJson data={JSON.parse(c.log)} /> */}
+            <LogView data={JSON.parse(c.log)} />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
+
+const LogView = ({ data }) => {
+  return (
+    <table className="">
+      <tbody className="align-baseline">
+        {Object.entries(data).map(([key, value]) => (
+          <tr>
+            <td className="whitespace-nowrap pr-2 bg-gray-100 rounded-sm">
+              {key}
+            </td>
+            <td className="pl-2">{value}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+};
 
 const PrettyPrintJson = ({ data }) => {
   // (destructured) data could be a prop for example

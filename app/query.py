@@ -17,9 +17,12 @@ class QBuilder:
         self.params = []
         self.added = False
 
-    def parse(self, q):
+    def parse(self, q, page):
         if q == "":
-            self.query += " ORDER BY timestamp DESC"
+            # WHERE parent_id ISNULL
+            self.query += " ORDER BY timestamp DESC LIMIT 50 OFFSET {}".format(
+                page * 50
+            )
             return
 
         f = parser.parse(q)
@@ -34,7 +37,7 @@ class QBuilder:
         # if self.query.strip()[-5:] == "WHERE":
         #     pass
 
-        self.query += " ORDER BY timestamp DESC"
+        self.query += " ORDER BY timestamp DESC LIMIT 50 OFFSET {} ".format(page * 50)
         print(self.query, self.params)
 
     def parse_class(self, f):
@@ -101,6 +104,9 @@ class QBuilder:
 
         self.query += " ) "
 
+    def parse_null(self, fname):
+        pass
+
     def parse_searchfield(self, s):
         fname = s.name
         fval = s.children[0]
@@ -110,12 +116,33 @@ class QBuilder:
         else:
             op = "="
 
+        print("fval", fval)
+        field = None
+        if fval.value.lower() == "null":
+            if fname == "id":
+                field = "id"
+            elif fname == "timestamp":
+                field = "timestamp"
+            elif fname == "parent_id":
+                field = "parent_id"
+
+            if field != None:
+                self.query += "{} ISNULL".format(field)
+            else:
+                self.query += " list_contains(string_keys, ?) == false AND list_contains(number_keys, ?) == false AND list_contains(bool_keys, ?) == false "
+                self.params.append(fname)
+                self.params.append(fname)
+                self.params.append(fname)
+            return
+
         kf, kv, val = self.parse_value(fval.value.replace("'", "").replace('"', ""))
 
         if fname == "timestamp":
             self.query += "timestamp {} ?".format(op)
             self.params.append(val)
             return
+
+        # elif fname == "parentId"
 
         # also do this for parentId
 
@@ -195,7 +222,7 @@ class QBuilder:
 
 
 if __name__ == "__main__":
-    QBuilder().parse('event:LOGIN OR (event:LOGIN AND store_whatever:"data you want")')
+    QBuilder().parse("event:null", 1)
 # print(type(f))
 # print(dir(f))
 # print(f.value)

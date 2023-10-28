@@ -1,15 +1,16 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import Search from "./components/search";
 import { useEffect } from "react";
 import Grid from "./components/grid";
+import { useLocation, useNavigate } from "react-router-dom";
 
-const fetchLogs = async (query) => {
+const fetchLogs = async (query, page) => {
   const response = await fetch("http://localhost:8000/search", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ query }),
+    body: JSON.stringify({ query, page }),
   });
 
   if (response.status == 400) {
@@ -21,45 +22,68 @@ const fetchLogs = async (query) => {
   return { logs: d, err: null };
 };
 
+export function useQuery() {
+  const { search } = useLocation();
+
+  return React.useMemo(() => new URLSearchParams(search), [search]);
+}
+
 function App() {
-  const [v, setV] = useState("");
+  const router = useNavigate();
+  const q = useQuery();
+  // const [v, setV] = useState("");
   const [query, setQuery] = useState("");
 
   const [err, setErr] = useState(null);
   const [logs, setLogs] = useState(null);
 
+  const f = async () => {
+    let page = q.get("p");
+    let query = q.get("query");
+    if (!query) {
+      query = "";
+    }
+
+    if (!page) {
+      page = 0;
+    }
+
+    const { logs, err } = await fetchLogs(q.get("query"), q.get("page"));
+    setLogs(logs);
+    setErr(err);
+  };
+
   useEffect(() => {
-    const doWork = async () => {
-      const { logs, err } = await fetchLogs(v);
-      setLogs(logs);
-      setErr(err);
-    };
-
-    // let interval = setInterval(refreshLogs, 1000);
-
-    doWork();
+    if (!q.get("query" || !q.get("p"))) {
+      router("/?query=&page=0");
+    }
   }, []);
 
   useEffect(() => {
-    const doWork = async () => {
-      console.log("Query", query);
-      console.log("refreshing");
-      console.log(v);
-      const { logs, err } = await fetchLogs(query);
-      setLogs(logs);
-      setErr(err);
-    };
+    console.log("QUERY CHNSGED!!!!");
+    console.log(q.get("query"));
+    f();
+  }, [q.get("query")]);
 
-    doWork();
-  }, [query]);
+  // useEffect(() => {
+  //   // const doWork = async () => {
+  //   //   let page = q.get("p");
 
-  async function refreshLogs() {
-    console.log("refreshing");
-    console.log(v);
-    const { logs, err } = await fetchLogs(query);
-    setLogs(logs);
-    setErr(err);
-  }
+  //   //   if (!page) {
+  //   //     page = 0;
+  //   //   }
+
+  //   //   const { logs, err } = await fetchLogs(query, page);
+  //   //   setLogs(logs);
+  //   //   setErr(err);
+  //   // };
+
+  //   // doWork();
+  //   f();
+  // }, [query]);
+
+  // useEffect(() => {
+  // }, [q.get("query")]);
 
   // async function handleSubmit(e) {
   //   e.preventDefault();
@@ -79,9 +103,15 @@ function App() {
       <div>
         <Search
           // onSubmit={handleSubmit}
-          onChange={(e) => setV(e.target.value)}
-          value={v}
-          onEnter={(e) => setQuery(e)}
+          // onChange={(e) => setV(e.target.value)}
+          defaultValue={q.get("query")}
+          onEnter={(e) => {
+            console.log("enter!!");
+            console.log(e);
+            // setQuery(e);
+            // q.set("query", e);
+            router(`/?query=${e}&p=${0}`);
+          }}
         />
         <p className="text-red-500 text-sm">{err}</p>
       </div>
@@ -91,9 +121,15 @@ function App() {
     <div className="overflow-x-none">
       <Search
         // onSubmit={handleSubmit}
-        onChange={(e) => setV(e.target.value)}
-        value={v}
-        onEnter={(e) => setQuery(e)}
+        // onChange={(e) => setV(e.target.value)}
+        defaultValue={q.get("query")}
+        onEnter={(e) => {
+          // setQuery(e);
+          console.log("enter!!");
+          console.log(e);
+          router(`/?query=${e}&p=${0}`);
+          // q.set("query", e);
+        }}
       />
       <p className="text-red-500 text-sm">{err}</p>
       <Grid logs={logs} />
