@@ -50,13 +50,13 @@ Array index (this is getting improved)
 
 ## todo
 
-- stop log on 'reset_erlog' message
-- use https://github.com/jurismarches/luqum as query language
+- clear db on 'reset_erlog' message (for development)
+- stream logs from db
 - get support for traces using `parentId` and `duration` or `start` `end` in ms
-- default field shown will be event, and all other data will be shown in key=param
 - show parents whenever you click on a child
 - on log submit, if log level is error, then with id == parent_id field to be error=true
 - same thing with warning
+- add toggle for parent id null or not
 
 - for each log, make a call to the db with the info to try and merge the events together
 - or just do that on every other log call where whenver there's a new info you
