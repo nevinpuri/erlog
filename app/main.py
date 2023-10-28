@@ -18,24 +18,37 @@ structlog.configure(processors=[structlog.processors.JSONRenderer()])
 
 
 def insert_log(log):
-    try:
-        if log == "":
-            return False
+    # logger = get_logger()
+    # id = str(uuid.uuid4())
+    # logger.info("Inserting log", id=id)
+    if log == "":
+        # logger.error("Log is none, skipping", parent_id=id)
+        return False
 
+    try:
         l = ujson.loads(log)
+    except Exception as e:
+        # logger.error("Failed parsing log json", parent_id=id, e=str(e))
+        return False
+
+    try:
         flattened = flatten(l)
+    except Exception as e:
+        # logger.error("Failed flattening json", parent_id=id, e=str(e))
+        return False
+
+    try:
         erlog = ErLog(log)
         erlog.parse_log(flattened)
 
         if erlog._id == None:
-            erlog._id = uuid.uuid4()
+            erlog._id = str(uuid.uuid4())
+    except Exception as e:
+        # logger.error("Failed parsing log", parent_id=id, e=str(e))
+        return False
 
-        print(erlog._id, erlog._parent_id, erlog._timestamp)
-        conn.execute(
-            "INSERT INTO etest VALUES (?, ?, ?)",
-            [erlog._id, erlog._parent_id, erlog._timestamp],
-        )
-
+    try:
+        # logger.info("Inserting into table", parent_id=id)
         conn.execute(
             "INSERT INTO erlogs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             [
@@ -51,12 +64,11 @@ def insert_log(log):
                 erlog._raw_log,
             ],
         )
-
-        return True
     except Exception as e:
-        print("Exception")
-        print(e)
+        # logger.error("Failed inserting into erlogs table", parent_id=id, e=str(e))
         return False
+
+    return True
 
 
 async def read_from_file():
@@ -106,18 +118,18 @@ async def root(request: Request):
     id = str(uuid.uuid4())
     logger.info("search request", id=id)
     body = await request.json()
-    print(type(body))
     if not isinstance(body, object) or isinstance(body, str):
         logger.error("Invalid json", body=body, parent_id=id)
         raise HTTPException(status_code=400, detail="Invalid json")
 
-    print(body)
     user_query = body["query"]
     page = body["page"]
+
+    if user_query == None:
+        user_query = ""
     if page == None:
         page = 0
 
-    print(page)
     try:
         p = int(page)
     except Exception:
@@ -134,7 +146,7 @@ async def root(request: Request):
         q.parse(user_query, p)
         query, params = q.query, q.params
     except Exception as e:
-        logger.error("Failed building query", err=str(e))
+        logger.error("Failed building query", parent_id=id)
         raise HTTPException(status_code=400, detail="Failed building query")
 
     # maybe put try catch

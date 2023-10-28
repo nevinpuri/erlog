@@ -20,9 +20,8 @@ class QBuilder:
     def parse(self, q, page):
         if q == "":
             # WHERE parent_id ISNULL
-            self.query += " ORDER BY timestamp DESC LIMIT 50 OFFSET {}".format(
-                page * 50
-            )
+            self.query += " ORDER BY timestamp DESC LIMIT 50 OFFSET ? "
+            self.params.append(int(page * 50))
             return
 
         f = parser.parse(q)
@@ -37,8 +36,9 @@ class QBuilder:
         # if self.query.strip()[-5:] == "WHERE":
         #     pass
 
-        self.query += " ORDER BY timestamp DESC LIMIT 50 OFFSET {} ".format(page * 50)
-        print(self.query, self.params)
+        self.query += " ORDER BY timestamp DESC LIMIT 50 OFFSET ? "
+        self.params.append(int(page * 50))
+        # print(self.query, self.params)
 
     def parse_class(self, f):
         if isinstance(f, AndOperation):
