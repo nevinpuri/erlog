@@ -7,8 +7,8 @@
 ## Features
 
 - Ingest as many logs as you want from an http endpoint or file
-- Query logs with lucene
-- Will run on anything
+- Query logs with a nice syntax
+- Support for `parent_id`, so logs can have "children"
 
 ## Sending Logs
 
@@ -86,6 +86,27 @@ Look here for an example of an instrumented function.
 For an example project, see app/main.py. Erlog is instrumented using structlog.
 If you run `export LOGS=file1.txt` and `python3 -m uvicorn main:app > file1.txt`,
 you will start seeing erlogs logs in erlog.
+
+## Using `parent_id`
+```python
+import uuid
+from structlog import get_logger
+
+logger = get_logger()
+
+# don't forget str()
+# making the id a Uuid type won't work
+# as it'll be printed as Uuid('iaodjfoiasjdijdsaiojf')
+# instead of 'iaodjfoiasjdijdsaiojf'
+
+id = str(uuid.uuid4())
+logger.log("root log", id=id)
+logger.log("child of root", parent_id=id)
+```
+
+This will show the log "root log" in the erlog ui.
+Once you click on "root log", you will be able to see "child of root"
+in the log viewer.
 
 ## Todo
 
