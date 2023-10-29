@@ -232,3 +232,9 @@ async def log(request: Request):
     #     ],
     # )
     return {"status": status}
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app)
