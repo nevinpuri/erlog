@@ -136,10 +136,6 @@ async def root(request: Request):
         logger.error("Invalid page", status_code=400, page=page, parent_id=id)
         raise HTTPException(status_code=400, detail="Page is invalid")
 
-    # todo: compress the log as much as possible to make it one giant
-    # log with the events when you do stuff like this
-    # logger.info("user query", user_query=user_query, parent_id=id)
-
     try:
         logger.info("building query", user_query=user_query, p=p, parent_id=id)
         q = QBuilder()
