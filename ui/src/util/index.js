@@ -1,3 +1,5 @@
+import React from "react";
+
 export function timeConverter(UNIX_timestamp) {
   var a = new Date(UNIX_timestamp * 1000);
   var months = [
@@ -24,6 +26,8 @@ export function timeConverter(UNIX_timestamp) {
   var min = "0" + a.getMinutes();
   // Seconds part from the timestamp
   var sec = "0" + a.getSeconds();
+
+  var ms = a.getMilliseconds();
   var time =
     date +
     " " +
@@ -35,6 +39,21 @@ export function timeConverter(UNIX_timestamp) {
     ":" +
     min.slice(-2) +
     ":" +
-    sec.slice(-2);
+    sec.slice(-2) +
+    "." +
+    ms;
+
   return time;
+}
+
+export function cvtReadable(obj) {
+  let out = "";
+  for (const [key, value] of Object.entries(obj)) {
+    if (key === "id" || key === "parent_id") {
+      continue;
+    }
+    out += ` ${key}=${value}`;
+  }
+
+  return out.trim();
 }

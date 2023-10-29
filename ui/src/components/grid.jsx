@@ -1,4 +1,4 @@
-import { timeConverter } from "../util/index";
+import { cvtReadable, timeConverter } from "../util/index";
 
 export default function Grid({ logs }) {
   return (
@@ -9,7 +9,8 @@ export default function Grid({ logs }) {
           key={log.id}
           className="even:bg-gray-100 hover:bg-gray-50 px-2"
         >
-          <span className="float-left">{log.log}</span>
+          {/* <span className="float-left">{JSON.parse(log.log).event}</span> */}
+          <span>{cvtReadable(JSON.parse(log.log))}</span>
           <span className="float-right">{timeConverter(log.timestamp)}</span>
         </a>
       ))}
