@@ -108,6 +108,8 @@ This will show the log "root log" in the erlog ui.
 Once you click on "root log", you will be able to see "child of root"
 in the log viewer.
 
+This is useful for when you want to capture logs across many different services, and have them all be in one location.
+
 ## Todo
 
 - clear db on 'reset_erlog' message (for development)
