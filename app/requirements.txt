@@ -18,3 +18,4 @@ structlog==23.2.0
 typing_extensions==4.8.0
 ujson==5.8.0
 uvicorn==0.23.2
+clickhouse-driver==0.2.6

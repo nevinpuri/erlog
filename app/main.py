@@ -3,9 +3,9 @@ from fastapi import FastAPI, HTTPException
 from fastapi import Request
 import json
 from fastapi.middleware.cors import CORSMiddleware
-from util import flatten
-from models import ErLog
-from query import QBuilder
+from app.util import flatten
+from app.models import ErLog
+from app.query import QBuilder
 import os
 from async_tail import atail
 import asyncio
@@ -13,28 +13,30 @@ import structlog
 from structlog import get_logger
 import ujson
 import uuid
+from clickhouse_driver import Client
+import uuid
 
-structlog.configure(processors=[structlog.processors.JSONRenderer()])
+# structlog.configure(processors=[structlog.processors.JSONRenderer()])
 
 
 def insert_log(log):
-    # logger = get_logger()
-    # id = str(uuid.uuid4())
-    # logger.info("Inserting log", id=id)
+    logger = get_logger()
+    id = str(uuid.uuid4())
+    logger.info("Inserting log", id=id)
     if log == "":
-        # logger.error("Log is none, skipping", parent_id=id)
+        logger.error("Log is none, skipping", parent_id=id)
         return False
 
     try:
         l = ujson.loads(log)
     except Exception as e:
-        # logger.error("Failed parsing log json", parent_id=id, e=str(e))
+        logger.error("Failed parsing log json", parent_id=id, e=str(e))
         return False
 
     try:
         flattened = flatten(l)
     except Exception as e:
-        # logger.error("Failed flattening json", parent_id=id, e=str(e))
+        logger.error("Failed flattening json", parent_id=id, e=str(e))
         return False
 
     try:
@@ -44,28 +46,31 @@ def insert_log(log):
         if erlog._id == None:
             erlog._id = str(uuid.uuid4())
     except Exception as e:
-        # logger.error("Failed parsing log", parent_id=id, e=str(e))
+        logger.error("Failed parsing log", parent_id=id, e=str(e))
         return False
 
     try:
-        # logger.info("Inserting into table", parent_id=id)
-        conn.execute(
-            "INSERT INTO erlogs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        logger.info("Inserting into table", parent_id=id)
+        logger.info("hi", uid=str(erlog._id))
+        client.execute(
+            "INSERT INTO erlogs (id, parent_id, Timestamp, string_keys, string_values, bool_keys, bool_values, number_keys, number_values, raw_log) VALUES",
             [
-                erlog._id,
-                erlog._parent_id,
-                erlog._timestamp,
-                erlog._string_keys,
-                erlog._string_values,
-                erlog._bool_keys,
-                erlog._bool_values,
-                erlog._number_keys,
-                erlog._number_values,
-                erlog._raw_log,
+                {
+                    "id": erlog._id,
+                    "parent_id": erlog._parent_id,
+                    "Timestamp": erlog._timestamp,
+                    "string_keys": erlog._string_keys,
+                    "string_values": erlog._string_values,
+                    "bool_keys": erlog._bool_keys,
+                    "bool_values": erlog._bool_values,
+                    "number_keys": erlog._number_keys,
+                    "number_values": erlog._number_values,
+                    "raw_log": erlog._raw_log,
+                }
             ],
         )
     except Exception as e:
-        # logger.error("Failed inserting into erlogs table", parent_id=id, e=str(e))
+        logger.error("Failed inserting into erlogs table", parent_id=id, e=str(e))
         return False
 
     return True
@@ -79,13 +84,23 @@ async def read_from_file():
         insert_log(str(line[0]))
 
 
+logger = get_logger()
+client = Client(host="localhost")
+
 conn = duckdb.connect("./logs.db")
-conn.execute(
-    "CREATE TABLE IF NOT EXISTS erlogs (id UUID primary key, parent_id UUID, timestamp DOUBLE, string_keys string[], string_values string[], bool_keys string[], bool_values bool[], number_keys string[], number_values double[], raw_log string);"
+# client.execute(
+# "CREATE TABLE IF NOT EXISTS erlogs (id UUID, parent_id UUID, timestamp DOUBLE, string_keys Array(String), string_values Array(String), bool_keys Array(String), bool_values Array(Bool), number_keys Array(String), number_values Array(Float64), "
+# )
+client.execute(
+    "CREATE TABLE IF NOT EXISTS erlogs (\nid UUID,\nparent_id Nullable(UUID),\nTimestamp Float64,\nstring_keys Array(String),\nstring_values Array(String),\nbool_keys Array(String),\nbool_values Array(String),\nnumber_keys Array(String),\nnumber_values Array(Float64),\nraw_log String)\nEngine = MergeTree()\nORDER BY toUnixTimestamp(Timestamp)\nPARTITION BY toDate(Timestamp);"
 )
-conn.execute(
-    "CREATE TABLE IF NOT EXISTS etest (id UUID, parent_id UUID, timestamp DOUBLE)"
-)
+
+# conn.execute(
+#     "CREATE TABLE IF NOT EXISTS erlogs (id UUID primary key, parent_id UUID, timestamp DOUBLE, string_keys string[], string_values string[], bool_keys string[], bool_values bool[], number_keys string[], number_values double[], raw_log string);"
+# )
+# conn.execute(
+#     "CREATE TABLE IF NOT EXISTS etest (id UUID, parent_id UUID, timestamp DOUBLE)"
+# )
 
 app = FastAPI()
 
@@ -149,7 +164,9 @@ async def root(request: Request):
 
     try:
         logger.info("executing query", query=query, parent_id=id)
-        l = conn.execute(query, params).fetchall()
+        l = client.execute(query, params)
+        # print(l)
+        # print(dir(l))
     except Exception as e:
         logger.error("Failed executing query", query=query, parent_id=id, err=str(e))
         raise HTTPException(status_code=400, detail="Failed executing query")
@@ -173,20 +190,26 @@ async def get_log(request: Request):
     if id is None:
         raise HTTPException(status_code=400, detail="Invalid json")
 
-    h = conn.execute(
-        "SELECT id, parent_id, timestamp, raw_log from erlogs WHERE id = ?", [id]
+    logs = client.execute(
+        "SELECT id, parent_id, Timestamp, raw_log from erlogs WHERE id = %(id)s",
+        {"id": id},
     )
-    log = h.fetchone()
+
+    if len(logs) < 1:
+        raise Exception("No log found")
+
+    log = logs[0]
+    # log = h.fetchone()
 
     # print(log[])
     # if log[1] != None:
-    c = conn.execute(
-        "SELECT id, parent_id, timestamp, raw_log from erlogs WHERE parent_id = ? ORDER BY timestamp ASC",
-        [id],
+    clogs = client.execute(
+        "SELECT id, parent_id, Timestamp, raw_log from erlogs WHERE parent_id = %(pid)s ORDER BY Timestamp ASC",
+        {"pid": id},
     )
 
     children = []
-    clogs = c.fetchall()
+    # clogs = c.fetchall()
     for c in clogs:
         children.append({"id": c[0], "parent_id": c[1], "timestamp": c[2], "log": c[3]})
         # print("hi")

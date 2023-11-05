@@ -1,0 +1,1 @@
+docker run -d -p 8123:8123 -p9000:9000 --name some-clickhouse-server --ulimit nofile=262144:262144 clickhouse/clickhouse-server

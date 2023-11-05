@@ -9,21 +9,21 @@ from luqum.tree import (
     OrOperation,
     Group,
 )
+import uuid
 
 
 class QBuilder:
     def __init__(self):
-        self.query = "SELECT id, timestamp, raw_log from erlogs"
-        self.params = []
+        self.query = "SELECT id, Timestamp, raw_log from erlogs"
+        self.params = {}
         self.added = False
 
     def parse(self, q, page):
         if q == "":
             # WHERE parent_id ISNULL
-            self.query += (
-                " WHERE parent_id ISNULL ORDER BY timestamp DESC LIMIT 50 OFFSET ? "
-            )
-            self.params.append(int(page * 50))
+            qu = str(uuid.uuid4())
+            self.query += f" WHERE ISNULL(parent_id) ORDER BY Timestamp DESC LIMIT 50 OFFSET %({qu})s "
+            self.params.update({qu: int(page * 50)})
             return
 
         f = parser.parse(q)
@@ -38,8 +38,9 @@ class QBuilder:
         # if self.query.strip()[-5:] == "WHERE":
         #     pass
 
-        self.query += " ORDER BY timestamp DESC LIMIT 50 OFFSET ? "
-        self.params.append(int(page * 50))
+        qeu = str(uuid.uuid4())
+        self.query += f" ORDER BY Timestamp DESC LIMIT 50 OFFSET %({qeu})s "
+        self.params.update({qeu: int(page * 50)})
         # print(self.query, self.params)
 
     def parse_class(self, f):
@@ -124,24 +125,31 @@ class QBuilder:
             if fname == "id":
                 field = "id"
             elif fname == "timestamp":
-                field = "timestamp"
+                field = "Timestamp"
             elif fname == "parent_id":
                 field = "parent_id"
 
             if field != None:
-                self.query += "{} ISNULL".format(field)
+                self.query += "ISNULL({})".format(field)
             else:
-                self.query += " list_contains(string_keys, ?) == false AND list_contains(number_keys, ?) == false AND list_contains(bool_keys, ?) == false "
-                self.params.append(fname)
-                self.params.append(fname)
-                self.params.append(fname)
+                su = str(uuid.uuid4())
+                nu = str(uuid.uuid4())
+                bu = str(uuid.uuid4())
+
+                self.query += f" has(string_keys, %({su})s) == 0 AND has(number_keys, %({nu})s) == 0 AND has(bool_keys, %({bu})s) == 0"
+                self.params.update({su: fname, bu: fname, nu: fname})
+                # self.params.append(fname)
+                # self.params.append(fname)
+                # self.params.append(fname)
             return
 
         kf, kv, val = self.parse_value(fval.value.replace("'", "").replace('"', ""))
 
         if fname == "timestamp":
-            self.query += "timestamp {} ?".format(op)
-            self.params.append(val)
+            tu = str(uuid.uuid4())
+            self.query += f"Timestamp {op} %({tu})s"
+            # self.params.append(val)
+            self.params.update({tu: val})
             return
 
         # elif fname == "parentId"
@@ -152,9 +160,12 @@ class QBuilder:
         #     self.query += " WHERE "
         #     self.added = True
 
-        self.query += "{}[list_indexof({}, ?)] {} ?".format(kv, kf, op)
-        self.params.append(fname)
-        self.params.append(val)
+        bf = str(uuid.uuid4())
+        bv = str(uuid.uuid4())
+        self.query += f"{kv}[indexOf({kf}, %({bf})s)] {op} %({bv})s"
+        self.params.update({bf: fname, bv: val})
+        # self.params.append(fname)
+        # self.params.append(val)
         # print(s.name, s.children)
         # print(dir(s))
         pass
@@ -166,9 +177,12 @@ class QBuilder:
         #     self.query += " WHERE "
         #     self.added = True
 
-        self.query += "list_contains({}, ?) OR list_contains({}, ?)".format(kf, kv)
-        self.params.append(val)
-        self.params.append(val)
+        uv = str(uuid.uuid4())
+        sv = str(uuid.uuid4())
+        self.query += f"has({kf}, %({uv})s) OR has({kv}, %({sv})s)"
+        self.params.update({uv: val, sv: val})
+        # self.params.append(val)
+        # self.params.append(val)
 
     def parse_phrase(self, p):
         print(dir(p))
@@ -178,9 +192,12 @@ class QBuilder:
         #     self.query += " WHERE "
         #     self.added = True
 
-        self.query += "list_contains({}, ?) OR list_contains({}, ?)".format(kf, kv)
-        self.params.append(val)
-        self.params.append(val)
+        fv = str(uuid.uuid4())
+        sv = str(uuid.uuid4())
+        self.query += f"has({kf}, %({fv})s) OR has({kv}, %({sv})s)"
+        self.params.update({fv: val, sv: val})
+        # self.params.append(val)
+        # self.params.append(val)
         # self.query += "list_contains({}, ?)".format(kf)
         # self.params.append(val)
 
