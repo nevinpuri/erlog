@@ -1,16 +1,23 @@
 ## Erlog
 
-#### A Log Platform which runs on a $4 VPS
+todo: rewrite in go, and frontend in react
+
+<!-- #### A Log Platform which runs on a $4 VPS -->
+
+#### A Log Platform Which Runs on a $4 VPS
+
+ErLog is a log platform which is contained in a single Dockerfile. It supports OpenTelemetry, and uses Clickhouse as its DB.
 
 ![img1](./assets/1.png)
 
 ## Features
 
 - Ingest as many logs as you want from an http endpoint or file
-- Query logs with a nice syntax
-- Support for `parent_id`, so logs can have "children"
+- Query logs in seconds rather than minutes
 
 ## Sending Logs
+
+In your otel code, add the collector
 
 Just send a POST request to erlog with JSON
 
@@ -88,6 +95,7 @@ If you run `export LOGS=file1.txt` and `python3 -m uvicorn main:app > file1.txt`
 you will start seeing erlogs logs in erlog.
 
 ## Using `parent_id`
+
 ```python
 import uuid
 from structlog import get_logger

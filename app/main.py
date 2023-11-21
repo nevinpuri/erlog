@@ -1,4 +1,3 @@
-import duckdb
 from fastapi import FastAPI, HTTPException
 from fastapi import Request
 import json
@@ -87,7 +86,7 @@ async def read_from_file():
 logger = get_logger()
 client = Client(host="localhost")
 
-conn = duckdb.connect("./logs.db")
+# conn = duckdb.connect("./logs.db")
 # client.execute(
 # "CREATE TABLE IF NOT EXISTS erlogs (id UUID, parent_id UUID, timestamp DOUBLE, string_keys Array(String), string_values Array(String), bool_keys Array(String), bool_values Array(Bool), number_keys Array(String), number_values Array(Float64), "
 # )
