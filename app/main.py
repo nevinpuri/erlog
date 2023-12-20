@@ -1,4 +1,3 @@
-import duckdb
 from fastapi import FastAPI, HTTPException
 from fastapi import Request
 import json
@@ -13,6 +12,7 @@ import structlog
 from structlog import get_logger
 import ujson
 import uuid
+from chdb import dbapi
 
 structlog.configure(processors=[structlog.processors.JSONRenderer()])
 
@@ -49,7 +49,7 @@ def insert_log(log):
 
     try:
         # logger.info("Inserting into table", parent_id=id)
-        conn.execute(
+        cur.execute(
             "INSERT INTO erlogs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             [
                 erlog._id,
@@ -79,11 +79,13 @@ async def read_from_file():
         insert_log(str(line[0]))
 
 
-conn = duckdb.connect("./logs.db")
-conn.execute(
+conn = dbapi.connect("./logs.db")
+cur = conn.cursor()
+
+cur.execute(
     "CREATE TABLE IF NOT EXISTS erlogs (id UUID primary key, parent_id UUID, timestamp DOUBLE, string_keys string[], string_values string[], bool_keys string[], bool_values bool[], number_keys string[], number_values double[], raw_log string);"
 )
-conn.execute(
+cur.execute(
     "CREATE TABLE IF NOT EXISTS etest (id UUID, parent_id UUID, timestamp DOUBLE)"
 )
 
@@ -149,7 +151,7 @@ async def root(request: Request):
 
     try:
         logger.info("executing query", query=query, parent_id=id)
-        l = conn.execute(query, params).fetchall()
+        l = cur.execute(query, params).fetchall()
     except Exception as e:
         logger.error("Failed executing query", query=query, parent_id=id, err=str(e))
         raise HTTPException(status_code=400, detail="Failed executing query")
@@ -173,14 +175,14 @@ async def get_log(request: Request):
     if id is None:
         raise HTTPException(status_code=400, detail="Invalid json")
 
-    h = conn.execute(
+    h = cur.execute(
         "SELECT id, parent_id, timestamp, raw_log from erlogs WHERE id = ?", [id]
     )
     log = h.fetchone()
 
     # print(log[])
     # if log[1] != None:
-    c = conn.execute(
+    c = cur.execute(
         "SELECT id, parent_id, timestamp, raw_log from erlogs WHERE parent_id = ? ORDER BY timestamp ASC",
         [id],
     )
