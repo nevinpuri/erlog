@@ -12,7 +12,9 @@ import structlog
 from structlog import get_logger
 import ujson
 import uuid
-from clickhouse_driver import Client
+
+# from clickhouse_driver import Client
+from chdb import dbapi
 import uuid
 
 # structlog.configure(processors=[structlog.processors.JSONRenderer()])
@@ -51,7 +53,7 @@ def insert_log(log):
     try:
         logger.info("Inserting into table", parent_id=id)
         logger.info("hi", uid=str(erlog._id))
-        client.execute(
+        client.query(
             "INSERT INTO erlogs (id, parent_id, Timestamp, string_keys, string_values, bool_keys, bool_values, number_keys, number_values, raw_log) VALUES",
             [
                 {
@@ -84,13 +86,15 @@ async def read_from_file():
 
 
 logger = get_logger()
-client = Client(host="localhost")
+# client = Session(path="./logs")
+con = dbapi.connect("./logs")
+cur = con.cursor()
 
 # conn = duckdb.connect("./logs.db")
 # client.execute(
 # "CREATE TABLE IF NOT EXISTS erlogs (id UUID, parent_id UUID, timestamp DOUBLE, string_keys Array(String), string_values Array(String), bool_keys Array(String), bool_values Array(Bool), number_keys Array(String), number_values Array(Float64), "
 # )
-client.execute(
+cur.execute(
     "CREATE TABLE IF NOT EXISTS erlogs (\nid UUID,\nparent_id Nullable(UUID),\nTimestamp Float64,\nstring_keys Array(String),\nstring_values Array(String),\nbool_keys Array(String),\nbool_values Array(String),\nnumber_keys Array(String),\nnumber_values Array(Float64),\nraw_log String)\nEngine = MergeTree()\nORDER BY toUnixTimestamp(Timestamp)\nPARTITION BY toDate(Timestamp);"
 )
 
@@ -163,7 +167,7 @@ async def root(request: Request):
 
     try:
         logger.info("executing query", query=query, parent_id=id)
-        l = client.execute(query, params)
+        l = cur.execute(query, params)
         # print(l)
         # print(dir(l))
     except Exception as e:
@@ -189,7 +193,7 @@ async def get_log(request: Request):
     if id is None:
         raise HTTPException(status_code=400, detail="Invalid json")
 
-    logs = client.execute(
+    logs = client.query(
         "SELECT id, parent_id, Timestamp, raw_log from erlogs WHERE id = %(id)s",
         {"id": id},
     )
@@ -202,7 +206,7 @@ async def get_log(request: Request):
 
     # print(log[])
     # if log[1] != None:
-    clogs = client.execute(
+    clogs = client.query(
         "SELECT id, parent_id, Timestamp, raw_log from erlogs WHERE parent_id = %(pid)s ORDER BY Timestamp ASC",
         {"pid": id},
     )

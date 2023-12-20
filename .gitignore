@@ -10,3 +10,4 @@ logs.db.wal
 #/target
 
 .DS_Store
+/logs/
