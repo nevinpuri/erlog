@@ -1,5 +1,16 @@
 ## Erlog
 
+_a log collector which attaches to a file, or you can send logs to, and then you can create metrics from_
+
+just add one file to your dockerfile, or use our **collector!!**
+
+todo, make a pull request which allows passing in a custom path which will be passed into the session object
+
+a distributed debugger
+
+> ok, you could put that into jaeger, but who wants to run a full instance
+> just run erlog, and your otel traces will go here. makes debugging a lot easier
+
 #### A Log Platform which runs on a $4 VPS
 
 ![img1](./assets/1.png)
@@ -88,6 +99,7 @@ If you run `export LOGS=file1.txt` and `python3 -m uvicorn main:app > file1.txt`
 you will start seeing erlogs logs in erlog.
 
 ## Using `parent_id`
+
 ```python
 import uuid
 from structlog import get_logger

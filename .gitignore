@@ -1,7 +1,8 @@
 /target
 logs.db
 logs.db.wal
-.venv/
+/venv
+/app/.venv
 
 # Added by cargo
 #

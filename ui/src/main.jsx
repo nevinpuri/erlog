@@ -16,10 +16,10 @@ const router = createBrowserRouter([
     element: <LogId />,
     loader: logIdLoader,
   },
-  // {
-  //   path: "/metrics",
-  //   element: <Metrics />,
-  // },
+  {
+    path: "/metrics",
+    element: <Metrics />,
+  },
 ]);
 
 const selected = (route) => {
@@ -56,7 +56,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <span className="mt-1 text-sm">Logs</span>
         </a>
 
-        {/* <a
+        <a
           href="/metrics"
           className={`inline-flex flex-col items-center ${selected(
             "/metrics"
@@ -77,7 +77,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             />
           </svg>
           <span className="mt-1 text-sm">Metrics</span>
-        </a> */}
+        </a>
       </div>
       <div className="w-full">
         <RouterProvider router={router} />

@@ -2,9 +2,9 @@ from fastapi import FastAPI, HTTPException
 from fastapi import Request
 import json
 from fastapi.middleware.cors import CORSMiddleware
-from util import flatten
-from models import ErLog
-from query import QBuilder
+from app.util import flatten
+from app.models import ErLog
+from app.query import QBuilder
 import os
 from async_tail import atail
 import asyncio
@@ -12,13 +12,18 @@ import structlog
 from structlog import get_logger
 import ujson
 import uuid
-from chdb import dbapi
+from chdb.session import Session
+from chdb.udf import chdb_udf
+from chdb import query
+import chdb.dbapi as dbapi
+
+# from chdb import dbap
 
 structlog.configure(processors=[structlog.processors.JSONRenderer()])
 
 
 def insert_log(log):
-    # logger = get_logger()
+    logger = get_logger()
     # id = str(uuid.uuid4())
     # logger.info("Inserting log", id=id)
     if log == "":
@@ -28,13 +33,13 @@ def insert_log(log):
     try:
         l = ujson.loads(log)
     except Exception as e:
-        # logger.error("Failed parsing log json", parent_id=id, e=str(e))
+        logger.error("Failed parsing log json", parent_id=id, e=str(e))
         return False
 
     try:
         flattened = flatten(l)
     except Exception as e:
-        # logger.error("Failed flattening json", parent_id=id, e=str(e))
+        logger.error("Failed flattening json", parent_id=id, e=str(e))
         return False
 
     try:
@@ -42,15 +47,14 @@ def insert_log(log):
         erlog.parse_log(flattened)
 
         if erlog._id == None:
-            erlog._id = str(uuid.uuid4())
+            erlog._id = uuid.uuid4()
     except Exception as e:
-        # logger.error("Failed parsing log", parent_id=id, e=str(e))
+        logger.error("Failed parsing log", parent_id=id, e=str(e))
         return False
 
     try:
-        # logger.info("Inserting into table", parent_id=id)
-        cur.execute(
-            "INSERT INTO erlogs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        logger.info("Inserting into table", parent_id=id)
+        print(
             [
                 erlog._id,
                 erlog._parent_id,
@@ -62,45 +66,96 @@ def insert_log(log):
                 erlog._number_keys,
                 erlog._number_values,
                 erlog._raw_log,
+            ]
+        )
+        cur.execute(
+            "INSERT INTO e.erlogs VALUES (toUUID(%s))",
+            [
+                str(erlog._id),
+                # erlog._parent_id,
+                # erlog._timestamp,
+                # erlog._string_keys,
+                # erlog._string_values,
+                # erlog._bool_keys,
+                # erlog._bool_values,
+                # erlog._number_keys,
+                # erlog._number_values,
+                # erlog._raw_log,
             ],
         )
+        # cur.execute(
+        #     "INSERT INTO e.erlogs VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+        #     [
+        #         erlog._id,
+        #         erlog._parent_id,
+        #         erlog._timestamp,
+        #         erlog._string_keys,
+        #         erlog._string_values,
+        #         erlog._bool_keys,
+        #         erlog._bool_values,
+        #         erlog._number_keys,
+        #         erlog._number_values,
+        #         erlog._raw_log,
+        #     ],
+        # )
     except Exception as e:
-        # logger.error("Failed inserting into erlogs table", parent_id=id, e=str(e))
+        logger.error("Failed inserting into e.erlogs table", parent_id=id, e=str(e))
         return False
 
     return True
 
 
-async def read_from_file():
-    f = os.environ["LOGS"]
-    files = f.split(" ")
-    async for line in atail("file1.txt"):
-        # todo, get file name with it
-        insert_log(str(line[0]))
+# async def read_from_file():
+#     f = os.environ["LOGS"]
+#     files = f.split(" ")
+#     async for line in atail("file1.txt"):
+#         # todo, get file name with it
+#         insert_log(str(line[0]))
 
 
-conn = dbapi.connect("./logs.db")
+# client = Session()
+# client.query(
+#     "CREATE TABLE IF NOT EXISTS erlogs (id UUID primary key, parent_id UUID, timestamp DOUBLE, string_keys Array(String), string_values Array(String), bool_keys Array(String), bool_values Array(Boolean), number_keys Array(String), number_values Array(Double), raw_log String) Engine = MergeTree;"
+# )
+
+# client.query("CREATE DATABASE IF NOT EXISTS e ENGINE = Memory")
+
+import sys
+
+conn = dbapi.connect(path="./logs")
 cur = conn.cursor()
 
-cur.execute(
-    "CREATE TABLE IF NOT EXISTS erlogs (id UUID primary key, parent_id UUID, timestamp DOUBLE, string_keys string[], string_values string[], bool_keys string[], bool_values bool[], number_keys string[], number_values double[], raw_log string);"
+print("Creating tables..")
+cur.execute("CREATE DATABASE IF NOT EXISTS e ENGINE = Atomic;")
+res = cur.execute(
+    "CREATE TABLE IF NOT EXISTS e.erlogs (id UUID primary key, parent_id UUID, timestamp DOUBLE, string_keys Array(String), string_values Array(String), bool_keys Array(String), bool_values Array(Boolean), number_keys Array(String), number_values Array(Double), raw_log String) Engine = MergeTree;"
 )
-cur.execute(
-    "CREATE TABLE IF NOT EXISTS etest (id UUID, parent_id UUID, timestamp DOUBLE)"
-)
+
+print("Finished creating tables")
+
+# print(cur.execute("INSERT INTO e.hi (a, b) VALUES (%s, %s);", ["he", 32]))
+# cur.execute("SELECT * FROM e.hi")
+# res = cur.fetchall()
+# print(res)
+# sys.exit(0)
+# df = pd.DataFrame({"a": [str("hi")], "b": [32]})
+
+
+# tbl = cdf.Table(dataframe=df)
+# h = tbl.query("INSERT INTO e.hi SELECT a, b FROM __table__")
 
 app = FastAPI()
 
 
-@app.on_event("startup")
-async def read_logs():
-    if not "LOGS" in os.environ:
-        logger = get_logger()
-        logger.info("No logs in os.environ", l=len(os.environ))
-        return
+# @app.on_event("startup")
+# async def read_logs():
+#     if not "LOGS" in os.environ:
+#         logger = get_logger()
+#         logger.info("No logs in os.environ", l=len(os.environ))
+#         return
 
-    loop = asyncio.get_event_loop()
-    loop.create_task(read_from_file())
+#     loop = asyncio.get_event_loop()
+#     loop.create_task(read_from_file())
 
 
 origins = ["http://localhost", "http://localhost:59971", "*"]
@@ -176,14 +231,14 @@ async def get_log(request: Request):
         raise HTTPException(status_code=400, detail="Invalid json")
 
     h = cur.execute(
-        "SELECT id, parent_id, timestamp, raw_log from erlogs WHERE id = ?", [id]
+        "SELECT id, parent_id, timestamp, raw_log from e.erlogs WHERE id = %s", [id]
     )
     log = h.fetchone()
 
     # print(log[])
     # if log[1] != None:
     c = cur.execute(
-        "SELECT id, parent_id, timestamp, raw_log from erlogs WHERE parent_id = ? ORDER BY timestamp ASC",
+        "SELECT id, parent_id, timestamp, raw_log from e.erlogs WHERE parent_id = %s ORDER BY timestamp ASC",
         [id],
     )
 

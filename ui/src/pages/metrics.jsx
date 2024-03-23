@@ -7,6 +7,7 @@ import {
   Tooltip,
 } from "recharts";
 import MetricView from "../components/metricview";
+import { useEffect, useState } from "react";
 
 const data = [
   { amt: 10, hour: 1 },
@@ -15,10 +16,40 @@ const data = [
 ];
 
 export function Metrics() {
+  const [dHour, setDHour] = useState();
+  const [dDay, setDDay] = useState();
+
+  useEffect(() => {
+    const doWork = () => {
+      fetch("http://localhost:8000/search", {
+        method: "POST",
+        body: JSON.stringify({
+          per: "hour",
+        }),
+      }).then(async (e) => {
+        const d = await e.json();
+        console.log(d);
+        setDHour(d);
+      });
+
+      fetch("http://localhost:8000/search", {
+        method: "POST",
+        body: JSON.stringify({
+          per: "day",
+        }),
+      }).then(async (e) => {
+        const d = await e.json();
+        console.log(d);
+        setDDay(d);
+      });
+    };
+
+    doWork();
+  }, []);
   return (
     <div className="grid grid-cols-3">
-      <MetricView title="Active Users Per Hour" data={data} />
-      <MetricView title="Errors Per Hour" data={data} />
+      <MetricView title="Active Users Per Hour" data={dHour} per="hour" />
+      <MetricView title="Active users per day" data={dDay} per="day" />
       <MetricView title="Errors Per Hour" data={data} />
       <MetricView title="Errors Per Hour" data={data} />
     </div>

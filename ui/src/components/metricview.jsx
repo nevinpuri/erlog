@@ -7,7 +7,7 @@ import {
   Tooltip,
 } from "recharts";
 
-export default function MetricView({ title, data }) {
+export default function MetricView({ title, data, per }) {
   return (
     <div>
       <h1>{title}</h1>
@@ -17,10 +17,10 @@ export default function MetricView({ title, data }) {
         data={data}
         // margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
       >
-        <Line type="monotone" dataKey="amt" stroke="#8884d8" />
+        <Line type="monotone" dataKey="count" stroke="#8884d8" />
         <CartesianGrid stroke="#ccc" strokeDasharray="5 5" />
-        <XAxis dataKey="hour" />
-        <YAxis width={20} />
+        <XAxis dataKey="dateTime" />
+        <YAxis width={20} dataKey="count" />
         <Tooltip />
       </LineChart>
       {/* <h2>Send a POST requests with</h2>

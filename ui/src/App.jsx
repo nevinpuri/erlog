@@ -32,7 +32,6 @@ function App() {
   const router = useNavigate();
   const q = useQuery();
   // const [v, setV] = useState("");
-  const [query, setQuery] = useState("");
 
   const [err, setErr] = useState(null);
   const [logs, setLogs] = useState(null);
