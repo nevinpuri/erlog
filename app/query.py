@@ -9,21 +9,21 @@ from luqum.tree import (
     OrOperation,
     Group,
 )
+import uuid
 
 
 class QBuilder:
     def __init__(self):
         self.query = "SELECT id, timestamp, raw_log from erlogs"
-        self.params = []
+        self.params = {}
         self.added = False
 
     def parse(self, q, page):
         if q == "":
             # WHERE parent_id ISNULL
-            self.query += (
-                " WHERE parent_id ISNULL ORDER BY timestamp DESC LIMIT 50 OFFSET ? "
-            )
-            self.params.append(int(page * 50))
+            u = str(uuid.uuid4())
+            self.query += f" WHERE parent_id = '00000000-0000-0000-0000-000000000000' ORDER BY timestamp DESC LIMIT 50 OFFSET %({u})s "
+            self.params.update({u: int(page * 50)})
             return
 
         f = parser.parse(q)
@@ -38,8 +38,9 @@ class QBuilder:
         # if self.query.strip()[-5:] == "WHERE":
         #     pass
 
-        self.query += " ORDER BY timestamp DESC LIMIT 50 OFFSET ? "
-        self.params.append(int(page * 50))
+        u = str(uuid.uuid4())
+        self.query += f" ORDER BY timestamp DESC LIMIT 50 OFFSET %({u})s "
+        self.params.update({u: int(page * 50)})
         # print(self.query, self.params)
 
     def parse_class(self, f):

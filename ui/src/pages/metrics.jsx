@@ -9,49 +9,50 @@ import {
 import MetricView from "../components/metricview";
 import { useEffect, useState } from "react";
 
-const data = [
-  { amt: 10, hour: 1 },
-  { amt: 25, hour: 2 },
-  { amt: 35, hour: 3 },
-];
-
 export function Metrics() {
-  const [dHour, setDHour] = useState();
-  const [dDay, setDDay] = useState();
+  const [filter, setFilter] = useState("hour");
+  const [data, setData] = useState();
 
   useEffect(() => {
-    const doWork = () => {
-      fetch("http://localhost:8000/search", {
-        method: "POST",
-        body: JSON.stringify({
-          per: "hour",
-        }),
-      }).then(async (e) => {
-        const d = await e.json();
-        console.log(d);
-        setDHour(d);
-      });
+    fetch("http://localhost:8000/search", {
+      method: "POST",
+      body: JSON.stringify({
+        per: filter,
+      }),
+    }).then(async (e) => {
+      const d = await e.json();
+      console.log(d);
+      setData(d);
+    });
+  }, [filter]);
 
-      fetch("http://localhost:8000/search", {
-        method: "POST",
-        body: JSON.stringify({
-          per: "day",
-        }),
-      }).then(async (e) => {
-        const d = await e.json();
-        console.log(d);
-        setDDay(d);
-      });
-    };
-
-    doWork();
-  }, []);
+  // fuck me, this whole add shit to that object shit is really really good
   return (
-    <div className="grid grid-cols-3">
-      <MetricView title="Active Users Per Hour" data={dHour} per="hour" />
-      <MetricView title="Active users per day" data={dDay} per="day" />
+    <div>
+      <div className="flex justify-between mx-20 pt-">
+        <h1>Metrics</h1>
+        <div>
+          <label htmlFor="filter">Filter: </label>
+          <select
+            name="filter"
+            id="filter"
+            onChange={(e) => setFilter(e.target.value)}
+          >
+            <option value="hour">hour</option>
+            <option value="day">day</option>
+          </select>
+        </div>
+      </div>
+      <MetricView title="Active Users Per Hour" data={data} per="hour" />
+      {/* <MetricView title="Active users per day" data={dDay} per="day" />
       <MetricView title="Errors Per Hour" data={data} />
-      <MetricView title="Errors Per Hour" data={data} />
+      <MetricView title="Errors Per Hour" data={data} /> */}
+      <a
+        href="/metrics/new"
+        className="px-3.5 py-2 from-green-500 via-emerald-500 to-green-500 bg-gradient-to-tr hover:from-green-600 hover:via-emerald-600 hover:to-green-600 transition-all border-emerald-600 border font-semibold shadow-sm rounded-md text-white"
+      >
+        + New Metric
+      </a>
     </div>
     // <div>
     //   <h1>Active Users Per Hour</h1>

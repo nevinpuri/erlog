@@ -56,7 +56,7 @@ function App() {
     if (!q.get("query" || !q.get("p"))) {
       router("/?query=&page=0");
     }
-  }, []);
+  }, [q, router]);
 
   useEffect(() => {
     console.log("QUERY CHNSGED!!!!");

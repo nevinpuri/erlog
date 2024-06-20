@@ -24,7 +24,7 @@ structlog.configure(processors=[structlog.processors.JSONRenderer()])
 
 def insert_log(log):
     logger = get_logger()
-    # id = str(uuid.uuid4())
+    id = str(uuid.uuid4())
     # logger.info("Inserting log", id=id)
     if log == "":
         # logger.error("Log is none, skipping", parent_id=id)
@@ -42,22 +42,26 @@ def insert_log(log):
         logger.error("Failed flattening json", parent_id=id, e=str(e))
         return False
 
-    try:
-        erlog = ErLog(log)
-        erlog.parse_log(flattened)
+    # try:
+    erlog = ErLog(log)
+    erlog.parse_log(flattened)
 
-        if erlog._id == None:
-            erlog._id = uuid.uuid4()
-    except Exception as e:
-        logger.error("Failed parsing log", parent_id=id, e=str(e))
-        return False
+    if erlog._id == None:
+        erlog._id = str(uuid.uuid4())
+    # except Exception as e:
+    #     logger.error("Failed parsing log", parent_id=id, e=str(e))
+    #     return False
 
-    try:
-        logger.info("Inserting into table", parent_id=id)
-        print(
+    if erlog._parent_id == None:
+        # just make the parent id somethign random
+        erlog._parent_id = str("00000000-0000-0000-0000-000000000000")
+
+    client.execute(
+        "INSERT INTO erlogs VALUES",
+        [
             [
-                erlog._id,
-                erlog._parent_id,
+                str(erlog._id),
+                str(erlog._parent_id),
                 erlog._timestamp,
                 erlog._string_keys,
                 erlog._string_values,
@@ -67,40 +71,12 @@ def insert_log(log):
                 erlog._number_values,
                 erlog._raw_log,
             ]
-        )
-        cur.execute(
-            "INSERT INTO e.erlogs VALUES (toUUID(%s))",
-            [
-                str(erlog._id),
-                # erlog._parent_id,
-                # erlog._timestamp,
-                # erlog._string_keys,
-                # erlog._string_values,
-                # erlog._bool_keys,
-                # erlog._bool_values,
-                # erlog._number_keys,
-                # erlog._number_values,
-                # erlog._raw_log,
-            ],
-        )
-        # cur.execute(
-        #     "INSERT INTO e.erlogs VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-        #     [
-        #         erlog._id,
-        #         erlog._parent_id,
-        #         erlog._timestamp,
-        #         erlog._string_keys,
-        #         erlog._string_values,
-        #         erlog._bool_keys,
-        #         erlog._bool_values,
-        #         erlog._number_keys,
-        #         erlog._number_values,
-        #         erlog._raw_log,
-        #     ],
-        # )
-    except Exception as e:
-        logger.error("Failed inserting into e.erlogs table", parent_id=id, e=str(e))
-        return False
+        ],
+    )
+    # except Exception as e:
+    #     print(e)
+    #     logger.error("Failed inserting into e.erlogs table", parent_id=id, e=str(e))
+    #     return False
 
     return True
 
@@ -120,22 +96,24 @@ def insert_log(log):
 
 # client.query("CREATE DATABASE IF NOT EXISTS e ENGINE = Memory")
 
-import sys
 
-conn = dbapi.connect(path="./logs")
-cur = conn.cursor()
+from clickhouse_driver import Client
+
+client = Client(host="localhost", password="test123")
+# conn = dbapi.connect(path="./logs")
+# client = conn.clientsor()
 
 print("Creating tables..")
-cur.execute("CREATE DATABASE IF NOT EXISTS e ENGINE = Atomic;")
-res = cur.execute(
-    "CREATE TABLE IF NOT EXISTS e.erlogs (id UUID primary key, parent_id UUID, timestamp DOUBLE, string_keys Array(String), string_values Array(String), bool_keys Array(String), bool_values Array(Boolean), number_keys Array(String), number_values Array(Double), raw_log String) Engine = MergeTree;"
+# client.execute("CREATE DATABASE IF NOT EXISTS e ENGINE = Atomic;")
+res = client.execute(
+    "CREATE TABLE IF NOT EXISTS erlogs (id UUID primary key, parent_id UUID, timestamp DOUBLE, string_keys Array(String), string_values Array(String), bool_keys Array(String), bool_values Array(Boolean), number_keys Array(String), number_values Array(Double), raw_log String) Engine = MergeTree;"
 )
 
 print("Finished creating tables")
 
-# print(cur.execute("INSERT INTO e.hi (a, b) VALUES (%s, %s);", ["he", 32]))
-# cur.execute("SELECT * FROM e.hi")
-# res = cur.fetchall()
+# print(client.execute("INSERT INTO e.hi (a, b) VALUES (%s, %s);", ["he", 32]))
+# client.execute("SELECT * FROM e.hi")
+# res = client.fetchall()
 # print(res)
 # sys.exit(0)
 # df = pd.DataFrame({"a": [str("hi")], "b": [32]})
@@ -169,13 +147,30 @@ app.add_middleware(
 )
 
 
+@app.post("/test")
+async def test_log(request: Request):
+    logger = get_logger()
+    logger.info("hello!")
+    return "ok"
+
+
 @app.post("/search")
 async def root(request: Request):
+    # fine
     logger = get_logger()
+
+    # create a library which wraps structlog but also gives you access to uuid so
+    # id = create_id()
+    # logger.info()
+
     id = str(uuid.uuid4())
+    # so each of these will send a post request to the service with the id
     logger.info("search request", id=id)
+
     body = await request.json()
     if not isinstance(body, object) or isinstance(body, str):
+
+        # if the thing already exists with an id in the database
         logger.error("Invalid json", body=body, parent_id=id)
         raise HTTPException(status_code=400, detail="Invalid json")
 
@@ -204,12 +199,13 @@ async def root(request: Request):
 
     # maybe put try catch
 
-    try:
-        logger.info("executing query", query=query, parent_id=id)
-        l = cur.execute(query, params).fetchall()
-    except Exception as e:
-        logger.error("Failed executing query", query=query, parent_id=id, err=str(e))
-        raise HTTPException(status_code=400, detail="Failed executing query")
+    # try:
+    logger.info("executing query", query=query, parent_id=id)
+    print(query, params)
+    l = client.execute(query, params)
+    # except Exception as e:
+    # logger.error("Failed executing query", query=query, parent_id=id, err=str(e))
+    # raise HTTPException(status_code=400, detail="Failed executing query")
 
     logs = []
     for log in l:
@@ -230,20 +226,22 @@ async def get_log(request: Request):
     if id is None:
         raise HTTPException(status_code=400, detail="Invalid json")
 
-    h = cur.execute(
-        "SELECT id, parent_id, timestamp, raw_log from e.erlogs WHERE id = %s", [id]
+    h = client.execute(
+        "SELECT id, parent_id, timestamp, raw_log from erlogs WHERE id = %s", [id]
     )
-    log = h.fetchone()
+
+    # TODO: check if less than one
+    log = h[0]
 
     # print(log[])
     # if log[1] != None:
-    c = cur.execute(
-        "SELECT id, parent_id, timestamp, raw_log from e.erlogs WHERE parent_id = %s ORDER BY timestamp ASC",
+    c = client.execute(
+        "SELECT id, parent_id, timestamp, raw_log from erlogs WHERE parent_id = %s ORDER BY timestamp ASC",
         [id],
     )
 
     children = []
-    clogs = c.fetchall()
+    clogs = c
     for c in clogs:
         children.append({"id": c[0], "parent_id": c[1], "timestamp": c[2], "log": c[3]})
         # print("hi")

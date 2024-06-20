@@ -3,8 +3,8 @@ services:
   db:
     image: "clickhouse/clickhouse-server"
     ports:
-      - "18123:8123"
-      - "19000:9000"
+      - "8123:8123"
+      - "9000:9000"
     ulimits:
       nofile:
         soft: "262144"

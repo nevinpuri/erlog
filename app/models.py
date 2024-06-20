@@ -26,12 +26,12 @@ class ErLog:
                 continue
 
             if k == "parentId" or k == "parent_id":
-                self._parent_id = uuid.UUID(v)
+                self._parent_id = str(v)
                 continue
 
             if k == "id":
                 # uuid parse
-                self._id = uuid.UUID(v)
+                self._id = str(v)
                 continue
 
             if isinstance(v, str):

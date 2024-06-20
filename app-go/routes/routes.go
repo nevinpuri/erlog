@@ -8,9 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var perHour = "select toYear(timestamp) as year, toMonth(timestamp) as month, toDayOfMonth(timestamp) as date, toHour(timestamp) as hour, toMinute(timestamp) as minute, COUNT(*) as count from metrics GROUP BY minute, hour, date, month, year ORDER BY year, month, date, hour, minute;"
-var perDay = "select toYear(timestamp) as year, toMonth(timestamp) as month, toDayOfMonth(timestamp) as date, COUNT(*) as count from metrics GROUP BY date, month, year ORDER BY year, month, date;"
-
 func Search(c *gin.Context) {
 	var searchQuery SearchRequestBody
 	err := c.BindJSON(&searchQuery)
