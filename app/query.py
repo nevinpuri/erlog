@@ -167,9 +167,13 @@ class QBuilder:
         #     self.query += " WHERE "
         #     self.added = True
 
-        self.query += "list_contains({}, ?) OR list_contains({}, ?)".format(kf, kv)
-        self.params.append(val)
-        self.params.append(val)
+        val_id = str(uuid.uuid4())
+        val_id2 = str(uuid.uuid4())
+        self.query += (
+            f"list_contains({kf}, %({val_id})s) OR list_contains({kv}, %({val_id2})s)"
+        )
+        self.params.update({val_id: val})
+        self.params.update({val_id2: val})
 
     def parse_phrase(self, p):
         print(dir(p))
@@ -179,9 +183,13 @@ class QBuilder:
         #     self.query += " WHERE "
         #     self.added = True
 
-        self.query += "list_contains({}, ?) OR list_contains({}, ?)".format(kf, kv)
-        self.params.append(val)
-        self.params.append(val)
+        val_id = str(uuid.uuid4())
+        val_id2 = str(uuid.uuid4())
+        self.query += (
+            f"list_contains({kf}, %({val_id})s) OR list_contains({kv}, %({val_id2})s)"
+        )
+        self.params.update({val_id: val})
+        self.params.update({val_id2: val})
         # self.query += "list_contains({}, ?)".format(kf)
         # self.params.append(val)
 

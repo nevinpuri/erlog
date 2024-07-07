@@ -29,9 +29,21 @@ export function Metrics() {
   // fuck me, this whole add shit to that object shit is really really good
   return (
     <div>
-      <div className="flex justify-between mx-20 pt-">
+      <div className="mx-20 pt-2">
         <h1>Metrics</h1>
-        <div>
+        <h1>
+          Follow my{" "}
+          <a
+            href="https://x.com/nevinpuri"
+            target="_blank"
+            rel="noreferrer"
+            className="link link-info"
+          >
+            Twitter
+          </a>{" "}
+          to stay updated
+        </h1>
+        {/* <div>
           <label htmlFor="filter">Filter: </label>
           <select
             name="filter"
@@ -41,18 +53,18 @@ export function Metrics() {
             <option value="hour">hour</option>
             <option value="day">day</option>
           </select>
-        </div>
+        </div> */}
       </div>
-      <MetricView title="Active Users Per Hour" data={data} per="hour" />
+      {/* <MetricView title="Active Users Per Hour" data={data} per="hour" /> */}
       {/* <MetricView title="Active users per day" data={dDay} per="day" />
       <MetricView title="Errors Per Hour" data={data} />
       <MetricView title="Errors Per Hour" data={data} /> */}
-      <a
+      {/* <a
         href="/metrics/new"
         className="px-3.5 py-2 from-green-500 via-emerald-500 to-green-500 bg-gradient-to-tr hover:from-green-600 hover:via-emerald-600 hover:to-green-600 transition-all border-emerald-600 border font-semibold shadow-sm rounded-md text-white"
       >
         + New Metric
-      </a>
+      </a> */}
     </div>
     // <div>
     //   <h1>Active Users Per Hour</h1>

@@ -147,6 +147,11 @@ app.add_middleware(
 )
 
 
+@app.post("/metrics")
+async def metrics(request: Request):
+    return "ok!"
+
+
 @app.post("/test")
 async def test_log(request: Request):
     logger = get_logger()
@@ -188,14 +193,15 @@ async def root(request: Request):
         logger.error("Invalid page", status_code=400, page=page, parent_id=id)
         raise HTTPException(status_code=400, detail="Page is invalid")
 
-    try:
-        logger.info("building query", user_query=user_query, p=p, parent_id=id)
-        q = QBuilder()
-        q.parse(user_query, p)
-        query, params = q.query, q.params
-    except Exception as e:
-        logger.error("Failed building query", parent_id=id)
-        raise HTTPException(status_code=400, detail="Failed building query")
+    # try:
+    logger.info("building query", user_query=user_query, p=p, parent_id=id)
+    q = QBuilder()
+    q.parse(user_query, p)
+    query, params = q.query, q.params
+    # except Exception as e:
+    #     print(e)
+    #     logger.error("Failed building query", parent_id=id)
+    #     raise HTTPException(status_code=400, detail="Failed building query")
 
     # maybe put try catch
 
@@ -227,7 +233,8 @@ async def get_log(request: Request):
         raise HTTPException(status_code=400, detail="Invalid json")
 
     h = client.execute(
-        "SELECT id, parent_id, timestamp, raw_log from erlogs WHERE id = %s", [id]
+        "SELECT id, parent_id, timestamp, raw_log from erlogs WHERE id = %(s)s",
+        {"s": id},
     )
 
     # TODO: check if less than one
@@ -236,8 +243,8 @@ async def get_log(request: Request):
     # print(log[])
     # if log[1] != None:
     c = client.execute(
-        "SELECT id, parent_id, timestamp, raw_log from erlogs WHERE parent_id = %s ORDER BY timestamp ASC",
-        [id],
+        "SELECT id, parent_id, timestamp, raw_log from erlogs WHERE parent_id = %(s)s ORDER BY timestamp ASC",
+        {"s": id},
     )
 
     children = []
@@ -246,8 +253,6 @@ async def get_log(request: Request):
         children.append({"id": c[0], "parent_id": c[1], "timestamp": c[2], "log": c[3]})
         # print("hi")
         # print(len(child))
-
-    print(children)
 
     return {"id": log[0], "timestamp": log[2], "log": log[3], "children": children}
 

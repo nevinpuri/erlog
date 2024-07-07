@@ -1,6 +1,6 @@
 export default function BackButton() {
   return (
-    <a href="/" className="inline-flex">
+    <a href="/" className="inline-flex hover:underline mt-2">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         fill="none"

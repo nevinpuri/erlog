@@ -1,6 +1,7 @@
 import { useLoaderData } from "react-router-dom";
 import BackButton from "../components/back";
 import { timeConverter } from "../util";
+import React from "react";
 
 const fetchLog = async (id) => {
   const response = await fetch("http://localhost:8000/get", {
@@ -33,10 +34,10 @@ export function LogId() {
       <h1 className="font-normal text-lg my-2">Children</h1>
       <div className="space-y-4">
         {log.children.map((c) => (
-          <div>
-            <h1 className="text-lg font-medium">
+          <div key={c}>
+            <a className="text-lg font-medium link link-info" href={`/${c.id}`}>
               {timeConverter(c.timestamp)}
-            </h1>
+            </a>
             {/* <PrettyPrintJson data={JSON.parse(c.log)} /> */}
             <LogView data={JSON.parse(c.log)} />
           </div>
@@ -46,17 +47,31 @@ export function LogId() {
   );
 }
 
-const LogView = ({ data }) => {
+interface ILogViewProps {
+  data: any;
+}
+
+export const LogView = ({ data }: ILogViewProps) => {
   return (
-    <table className="">
-      <tbody className="align-baseline">
+    <table className="table table-zebra table-sm max-w-md overflow-x-scroll">
+      <thead>
+        <tr>
+          <th>Field</th>
+          <th>Value</th>
+        </tr>
+      </thead>
+      <tbody className="">
         {Object.entries(data).map(([key, value]) => (
-          <tr>
-            <td className="whitespace-nowrap pr-2 bg-gray-100 rounded-sm">
-              {key}
-            </td>
-            <td className="pl-2">{value}</td>
-          </tr>
+          <>
+            {key !== "id" && key !== "timestamp" ? (
+              <tr key={key}>
+                <td className="font-bold">{key}</td>
+                <td className="pl-2">{value}</td>
+              </tr>
+            ) : (
+              <></>
+            )}
+          </>
         ))}
       </tbody>
     </table>

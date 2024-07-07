@@ -1,5 +1,3 @@
-import React from "react";
-
 export function timeConverter(UNIX_timestamp) {
   var a = new Date(UNIX_timestamp * 1000);
   var months = [

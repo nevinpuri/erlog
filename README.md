@@ -49,6 +49,9 @@ name:"foo bar"
 name.first:foo
 name.first:"foo bar"
 
+# search for name[0] = "item"
+name.0:item
+
 # member = true
 member:true
 member:false
