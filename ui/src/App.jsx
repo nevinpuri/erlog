@@ -4,13 +4,17 @@ import { useEffect } from "react";
 import Grid from "./components/grid";
 import { useLocation, useNavigate } from "react-router-dom";
 
-const fetchLogs = async (query, page) => {
+const fetchLogs = async (query, page, showChildren) => {
+  console.log(showChildren);
+  console.log("SHOW CHILDREN");
+  let q = query.replace(" and ", " AND ");
+  q = q.replace(" or ", " OR ");
   const response = await fetch("http://localhost:8000/search", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ query, page }),
+    body: JSON.stringify({ query: q, page, showChildren }),
   });
 
   if (response.status == 400) {
@@ -32,13 +36,26 @@ function App() {
   const router = useNavigate();
   const q = useQuery();
   // const [v, setV] = useState("");
+  const getDefaultShowChildrenVal = () => {
+    const c = q.get("children");
+    if (c === "true") {
+      return true;
+    }
+    return false;
+  };
 
   const [err, setErr] = useState(null);
   const [logs, setLogs] = useState(null);
+  const [showChildren, setShowChildren] = useState(getDefaultShowChildrenVal());
+
+  // useEffect(() => {
+  //   router(`/?query=${e}&p=${0}&children=${showChildren}`);
+  // }, [showChildren]);
 
   const f = async () => {
     let page = q.get("p");
     let query = q.get("query");
+    let showChildren = q.get("children");
     if (!query) {
       query = "";
     }
@@ -47,22 +64,41 @@ function App() {
       page = 0;
     }
 
-    const { logs, err } = await fetchLogs(q.get("query"), q.get("page"));
+    if (!showChildren) {
+      showChildren = false;
+    }
+
+    const { logs, err } = await fetchLogs(
+      query,
+      page,
+      showChildren
+      // q.get("query"),
+      // q.get("page"),
+      // q.get("children")
+    );
     setLogs(logs);
     setErr(err);
   };
 
   useEffect(() => {
-    if (!q.get("query" || !q.get("p"))) {
-      router("/?query=&page=0");
+    if (!q.get("query") || !q.get("page") || !q.get("children")) {
+      router(`/?query=&page=0&children=${showChildren}`);
     }
   }, [q, router]);
+
+  useEffect(() => {
+    let query = q.get("query");
+    if (query === null) {
+      query = "";
+    }
+    router(`/?query=${query}&page=0&children=${showChildren}`);
+  }, [showChildren, q, router]);
 
   useEffect(() => {
     console.log("QUERY CHNSGED!!!!");
     console.log(q.get("query"));
     f();
-  }, [q.get("query")]);
+  }, [q.get("query"), q.get("children"), q.get("page")]);
 
   // useEffect(() => {
   //   // const doWork = async () => {
@@ -109,7 +145,11 @@ function App() {
             console.log(e);
             // setQuery(e);
             // q.set("query", e);
-            router(`/?query=${e}&p=${0}`);
+            router(`/?query=${e}&p=${0}&children=${showChildren}`);
+          }}
+          showChildren={showChildren}
+          onShowChildrenChange={(e) => {
+            setShowChildren(e);
           }}
         />
         <p className="text-red-500 text-sm">{err}</p>
@@ -126,8 +166,12 @@ function App() {
           // setQuery(e);
           console.log("enter!!");
           console.log(e);
-          router(`/?query=${e}&p=${0}`);
+          router(`/?query=${e}&p=${0}&children=${showChildren}`);
           // q.set("query", e);
+        }}
+        showChildren={showChildren}
+        onShowChildrenChange={(e) => {
+          setShowChildren(e);
         }}
       />
       <p className="text-red-500 text-sm">{err}</p>

@@ -30,9 +30,9 @@ export function Metrics() {
   return (
     <div>
       <div className="mx-20 pt-2">
-        <h1>Metrics</h1>
+        <h1>Metrics — Coming Soon</h1>
         <h1>
-          Follow my{" "}
+          Follow me on{" "}
           <a
             href="https://x.com/nevinpuri"
             target="_blank"

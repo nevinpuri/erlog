@@ -1,10 +1,17 @@
 import { useState } from "react";
 
-export default function Search({ onSubmit, onChange, defaultValue, onEnter }) {
+export default function Search({
+  onSubmit,
+  onChange,
+  defaultValue,
+  onEnter,
+  onShowChildrenChange,
+  showChildren,
+}) {
   const [v, setV] = useState("");
   return (
     <form className="grid grid-cols-8" onSubmit={(e) => e.preventDefault()}>
-      <label className="input input-bordered w-full col-span-5 flex items-center">
+      <label className="input input-bordered w-full col-span-6 flex items-center">
         <input
           type="text"
           onChange={(e) => {
@@ -47,6 +54,21 @@ export default function Search({ onSubmit, onChange, defaultValue, onEnter }) {
           </a>
         </div>
       </label>
+      <div className="flex items-center">
+        <div className="form-control ml-4">
+          <label className="label cursor-pointer">
+            <span className="label-text">Show child logs</span>
+            <input
+              type="checkbox"
+              className="checkbox ml-2"
+              onChange={(e) => {
+                onShowChildrenChange(e.target.checked);
+              }}
+              checked={showChildren}
+            />
+          </label>
+        </div>
+      </div>
     </form>
   );
 }

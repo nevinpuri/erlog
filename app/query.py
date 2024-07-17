@@ -18,11 +18,15 @@ class QBuilder:
         self.params = {}
         self.added = False
 
-    def parse(self, q, page):
+    def parse(self, q, page, show_children):
         if q == "":
             # WHERE parent_id ISNULL
             u = str(uuid.uuid4())
-            self.query += f" WHERE parent_id = '00000000-0000-0000-0000-000000000000' ORDER BY timestamp DESC LIMIT 50 OFFSET %({u})s "
+            if show_children == False:
+                self.query += (
+                    " WHERE parent_id = '00000000-0000-0000-0000-000000000000' "
+                )
+            self.query += f" ORDER BY timestamp DESC LIMIT 50 OFFSET %({u})s "
             self.params.update({u: int(page * 50)})
             return
 
@@ -39,6 +43,8 @@ class QBuilder:
         #     pass
 
         u = str(uuid.uuid4())
+        if show_children == False:
+            self.query += " AND parent_id = '00000000-0000-0000-0000-000000000000' "
         self.query += f" ORDER BY timestamp DESC LIMIT 50 OFFSET %({u})s "
         self.params.update({u: int(page * 50)})
         # print(self.query, self.params)
@@ -126,23 +132,40 @@ class QBuilder:
                 field = "id"
             elif fname == "timestamp":
                 field = "timestamp"
-            elif fname == "parent_id":
+            elif fname == "parent_id" or fname == "parentId":
                 field = "parent_id"
 
             if field != None:
                 self.query += "{} ISNULL".format(field)
             else:
-                self.query += " list_contains(string_keys, ?) == false AND list_contains(number_keys, ?) == false AND list_contains(bool_keys, ?) == false "
-                self.params.append(fname)
-                self.params.append(fname)
-                self.params.append(fname)
+                str_keyid = str(uuid.uuid4())
+                num_keyid = str(uuid.uuid4())
+                bool_keyid = str(uuid.uuid4())
+                self.query += f" list_contains(string_keys, %({str_keyid})s) == false AND list_contains(number_keys, %({num_keyid})s) == false AND list_contains(bool_keys, %({bool_keyid})s) == false "
+                self.params.update({str_keyid: fname})
+                self.params.update({num_keyid: fname})
+                self.params.update({bool_keyid: fname})
             return
 
         kf, kv, val = self.parse_value(fval.value.replace("'", "").replace('"', ""))
 
         if fname == "timestamp":
-            self.query += "timestamp {} ?".format(op)
-            self.params.append(val)
+            v_id = str(uuid.uuid4())
+            self.query += f" timestamp {op} %({v_id})s "
+            self.params.update({v_id: val})
+            return
+
+        # also for id
+        if fname == "parent_id" or fname == "parentId":
+            v_id = str(uuid.uuid4())
+            self.query += f" parent_id {op} %({v_id})s "
+            self.params.update({v_id: val})
+            return
+
+        if fname == "id":
+            v_id = str(uuid.uuid4())
+            self.query += f" id {op} %({v_id})s "
+            self.params.update({v_id: val})
             return
 
         # elif fname == "parentId"
@@ -153,9 +176,11 @@ class QBuilder:
         #     self.query += " WHERE "
         #     self.added = True
 
-        self.query += "{}[list_indexof({}, ?)] {} ?".format(kv, kf, op)
-        self.params.append(fname)
-        self.params.append(val)
+        fname_id = str(uuid.uuid4())
+        val_id = str(uuid.uuid4())
+        self.query += f"{kv}[indexOf({kf}, %({fname_id})s)] {op} %({val_id})s"
+        self.params.update({fname_id: fname})
+        self.params.update({val_id: val})
         # print(s.name, s.children)
         # print(dir(s))
         pass

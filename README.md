@@ -131,3 +131,38 @@ This is useful for when you want to capture logs across many different services,
   The idea is that if they both have the same parent id, do the merge
 
 - start reporting logs from the ui, set up service_name for both
+
+##### installation packages
+
+- install openssl
+- install swig
+
+to install m2crypto on mac
+
+```
+env LDFLAGS="-L$(brew --prefix openssl)/lib" \
+CFLAGS="-I$(brew --prefix openssl)/include" \
+SWIG_FEATURES="-cpperraswarn -includeall -I$(brew --prefix openssl)/include" \
+pip3 install m2crypto
+```
+
+We get it, monitoring your applications in production is difficult. Most logging platforms are designed for large applications where people need to \_\_.
+
+However, that's not you. You're just building a small project and want to view your logs from your next js api routes, formatted, in one place, without configuring any additional collector. Erlog is really great at doing that.
+
+## Most logging platforms are built for enterprise
+
+## Most logging platforms aren't built for people like you
+
+(aren't built for people like you)
+
+They have every single use case, a convoluted ui, and follow a standard which is too complicated
+
+ours:
+
+- simple, one menu
+- zero configuration
+- works with your code
+
+- you dont need to worry about infastructure
+- you pay per month

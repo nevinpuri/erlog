@@ -1,23 +1,21 @@
 from fastapi import FastAPI, HTTPException
-from fastapi import Request
-import json
+from fastapi import Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from app.util import flatten
 from app.models import ErLog
 from app.query import QBuilder
-import os
-from async_tail import atail
-import asyncio
 import structlog
 from structlog import get_logger
 import ujson
 import uuid
-from chdb.session import Session
-from chdb.udf import chdb_udf
-from chdb import query
-import chdb.dbapi as dbapi
+import secrets
 
-# from chdb import dbap
+api_keys = ["ek-QldMOqfEWSpG_u6VCJv3ng_OD97OiXPDh5Luqvc"]
+
+# todo: use flask_httpauth
+# https://stackoverflow.com/questions/817882/unique-session-id-in-python/6092448#6092448
+# https://medium.com/@anubabajide/rest-api-authentication-in-flask-481518a7479b
+# instead of token generation use this qhwer u query the db
 
 structlog.configure(processors=[structlog.processors.JSONRenderer()])
 
@@ -147,6 +145,13 @@ app.add_middleware(
 )
 
 
+@app.post("/api_key")
+async def gen_api_key(request: Request):
+    key = "ek-" + secrets.token_urlsafe(29)
+    api_keys.append(key)
+    return key
+
+
 @app.post("/metrics")
 async def metrics(request: Request):
     return "ok!"
@@ -181,6 +186,13 @@ async def root(request: Request):
 
     user_query = body["query"]
     page = body["page"]
+    show_children = body["showChildren"]
+    if show_children == "true":
+        show_children = True
+    else:
+        show_children = False
+    print(show_children)
+    print("SHOW CHILDREN")
 
     if user_query == None:
         user_query = ""
@@ -196,7 +208,7 @@ async def root(request: Request):
     # try:
     logger.info("building query", user_query=user_query, p=p, parent_id=id)
     q = QBuilder()
-    q.parse(user_query, p)
+    q.parse(user_query, p, show_children)
     query, params = q.query, q.params
     # except Exception as e:
     #     print(e)
@@ -259,11 +271,17 @@ async def get_log(request: Request):
 
 @app.post("/")
 async def log(request: Request):
+    if not "Authorization" in request.headers:
+        raise HTTPException(401, "Unauthorized")
+
+    key = request.headers["Authorization"]
+    key = key.replace("Bearer ", "")
+
+    if not key in api_keys:
+        raise HTTPException(401, "Unauthorized")
+
     body = await request.json()
     s = ujson.dumps(body)
-    # erlog = ErLog(s)
-    # print(type(s))
-    print(s)
     status = insert_log(s)
 
     # if isinstance(body, str):

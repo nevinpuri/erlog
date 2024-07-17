@@ -18,3 +18,5 @@ typing_extensions==4.8.0
 ujson==5.8.0
 uvicorn==0.23.2
 clickhouse-driver==0.2.8
+Flask-Login==0.6.3
+M2Crypto==0.41.0

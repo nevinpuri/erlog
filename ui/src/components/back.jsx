@@ -1,6 +1,13 @@
+import { useNavigate } from "react-router-dom";
+
 export default function BackButton() {
+  const router = useNavigate();
   return (
-    <a href="/" className="inline-flex hover:underline mt-2">
+    <button
+      href="/"
+      className="inline-flex hover:underline mt-2"
+      onClick={() => router(-1)}
+    >
       <svg
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
@@ -16,6 +23,6 @@ export default function BackButton() {
         />
       </svg>
       <span className="ml-1.5">Back</span>
-    </a>
+    </button>
   );
 }
