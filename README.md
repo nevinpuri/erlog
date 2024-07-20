@@ -2,7 +2,7 @@
 
 #### A Log Platform which runs on a $4 VPS
 
-![img1](./assets/1.png)
+![img1](./assets/1.jpeg)
 
 ## Features
 
@@ -30,7 +30,7 @@ Alternatively, run `export LOGS=file1.txt file2.txt` and those files will be tai
 
 ## Viewing Logs
 
-![img2](./assets/2.png)
+![img2](./assets/2.jpeg)
 
 ## Querying
 

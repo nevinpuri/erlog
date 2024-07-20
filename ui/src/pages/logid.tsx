@@ -35,7 +35,7 @@ export function LogId() {
       <div className="space-y-4">
         {log.children.map((c) => (
           <div key={c}>
-            <a className="text-lg font-medium link link-info" href={`/${c.id}`}>
+            <a className="text-lg font-medium link" href={`/${c.id}`}>
               {timeConverter(c.timestamp)}
             </a>
             {/* <PrettyPrintJson data={JSON.parse(c.log)} /> */}
@@ -53,10 +53,10 @@ interface ILogViewProps {
 
 export const LogView = ({ data }: ILogViewProps) => {
   return (
-    <table className="table table-zebra table-sm max-w-md overflow-x-scroll">
-      <thead>
+    <table className="overflow-x-scroll outline outline-neutral">
+      <thead className="border-b border-b-black">
         <tr>
-          <th>Field</th>
+          <th className="bg-base-300">Field</th>
           <th>Value</th>
         </tr>
       </thead>
@@ -64,9 +64,9 @@ export const LogView = ({ data }: ILogViewProps) => {
         {Object.entries(data).map(([key, value]) => (
           <>
             {key !== "id" && key !== "timestamp" ? (
-              <tr key={key}>
-                <td className="font-bold">{key}</td>
-                <td className="pl-2">{value}</td>
+              <tr key={key} className="">
+                <td className="font-bold bg-base-300 px-2 py-0.5">{key}</td>
+                <td className="pl-2 pr-2">{value}</td>
               </tr>
             ) : (
               <></>
