@@ -6,25 +6,33 @@ import { useLocation, useNavigate } from "react-router-dom";
 import TimeFilter from "./components/TimeFilter";
 
 const fetchLogs = async (query, page, showChildren, timeRange) => {
-  console.log(showChildren);
-  console.log("SHOW CHILDREN");
-  let q = query.replace(" and ", " AND ");
-  q = q.replace(" or ", " OR ");
-  const response = await fetch("http://localhost:8000/search", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ query: q, page, showChildren, timeRange }),
-  });
+  try {
+    let q = query.replace(" and ", " AND ");
+    q = q.replace(" or ", " OR ");
+    const response = await fetch("http://localhost:8000/search", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ 
+        query: q, 
+        page, 
+        showChildren, 
+        timeRange 
+      }),
+    });
 
-  if (response.status == 400) {
-    let text = await response.json();
-    return { logs: null, err: text.detail };
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
+      return { logs: null, err: errorData.detail || `Error: ${response.status}` };
+    }
+
+    const data = await response.json();
+    return { logs: data, err: null };
+  } catch (error) {
+    console.error('Fetch error:', error);
+    return { logs: null, err: 'Failed to connect to the server' };
   }
-
-  const d = await response.json();
-  return { logs: d, err: null };
 };
 
 export function useQuery() {

@@ -23,6 +23,8 @@ api_keys = ["ek-QldMOqfEWSpG_u6VCJv3ng_OD97OiXPDh5Luqvc"]
 structlog.configure(processors=[structlog.processors.JSONRenderer()])
 
 
+logger = get_logger()
+
 def insert_log(log):
     logger = get_logger()
     id = str(uuid.uuid4())
@@ -152,7 +154,12 @@ async def items(token: Annotated[str, Depends(oauth2_scheme)]):
 #     loop.create_task(read_from_file())
 
 
-origins = ["http://localhost", "http://localhost:59971", "*"]
+origins = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://localhost",
+    "http://localhost:59971",
+]
 
 app.add_middleware(
     CORSMiddleware,
@@ -184,73 +191,50 @@ async def test_log(request: Request):
 
 @app.post("/search")
 async def root(request: Request):
-    # fine
-    logger = get_logger()
-
-    # create a library which wraps structlog but also gives you access to uuid so
-    # id = create_id()
-    # logger.info()
-
-    id = str(uuid.uuid4())
-    # so each of these will send a post request to the service with the id
-    logger.info("search request", id=id)
-
-    body = await request.json()
-    if not isinstance(body, object) or isinstance(body, str):
-
-        # if the thing already exists with an id in the database
-        logger.error("Invalid json", body=body, parent_id=id)
-        raise HTTPException(status_code=400, detail="Invalid json")
-
-    user_query = body["query"]
-    page = body["page"]
-    show_children = body["showChildren"]
-    time_range = body.get("timeRange", "all")
-    if show_children == "true":
-        show_children = True
-    else:
-        show_children = False
-    print(show_children)
-    print("SHOW CHILDREN")
-
-    if user_query == None:
-        user_query = ""
-    if page == None:
-        page = 0
-
     try:
-        p = int(page)
-    except Exception:
-        logger.error("Invalid page", status_code=400, page=page, parent_id=id)
-        raise HTTPException(status_code=400, detail="Page is invalid")
+        body = await request.json()
+        if not isinstance(body, object) or isinstance(body, str):
+            logger.error("Invalid json", error_details=str(body))
+            raise HTTPException(status_code=400, detail="Invalid json")
 
-    # try:
-    logger.info("building query", user_query=user_query, p=p, parent_id=id)
-    q = QBuilder()
-    q.parse(user_query, p, show_children, time_range)
-    query, params = q.query, q.params
-    # except Exception as e:
-    #     print(e)
-    #     logger.error("Failed building query", parent_id=id)
-    #     raise HTTPException(status_code=400, detail="Failed building query")
+        user_query = body.get("query", "")
+        page = body.get("page", 0)
+        show_children = body.get("showChildren", False)
+        time_range = body.get("timeRange", "all")
 
-    # maybe put try catch
+        # Convert show_children string to boolean if needed
+        if isinstance(show_children, str):
+            show_children = show_children.lower() == "true"
 
-    # try:
-    logger.info("executing query", query=query, parent_id=id)
-    print(query, params)
-    l = client.execute(query, params)
-    # except Exception as e:
-    # logger.error("Failed executing query", query=query, parent_id=id, err=str(e))
-    # raise HTTPException(status_code=400, detail="Failed executing query")
+        try:
+            p = int(page)
+        except Exception:
+            logger.error("Invalid page number", page_value=str(page))
+            raise HTTPException(status_code=400, detail="Page is invalid")
 
-    logs = []
-    for log in l:
-        logs.append(
+        logger.info("Building query", 
+                   user_query=str(user_query), 
+                   page=str(p),
+                   show_children=str(show_children),
+                   time_range=str(time_range))
+                   
+        q = QBuilder()
+        q.parse(user_query, p, show_children, time_range)
+        query, params = q.query, q.params
+
+        logger.info("Executing query", query=str(query))
+        l = client.execute(query, params)
+
+        logs = [
             {"id": log[0], "timestamp": log[1], "log": log[2], "child_logs": log[3]}
-        )
+            for log in l
+        ]
 
-    return logs
+        return logs
+
+    except Exception as e:
+        logger.error("Search error", error_message=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/get")
