@@ -36,6 +36,7 @@ function getLink(item) {
 
 interface Props {
   item: Item;
+  onHover: () => void;
 }
 
 interface Item {
@@ -51,51 +52,12 @@ interface LogPreview {
   fields: { key: string; value: string }[];
 }
 
-export default function GridItem({ item }: Props) {
+export default function GridItem({ item, onHover }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [childLogs, setChildLogs] = useState<Item[] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
-  const [previewData, setPreviewData] = useState<LogPreview | null>(null);
-  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const log = JSON.parse(item.log);
   const bgColor = getColor(log.level);
-
-  const fetchPreviewData = useCallback(async () => {
-    setIsLoadingPreview(true);
-    try {
-      const response = await fetch(`http://localhost:8000/preview/${item.id}`);
-      if (!response.ok) throw new Error('Failed to fetch preview');
-      const data = await response.json();
-      
-      // Parse the log data into a more readable format
-      const parsedLog = JSON.parse(data.log);
-      const fields = Object.entries(parsedLog)
-        .filter(([key]) => key !== 'timestamp' && key !== 'level')
-        .map(([key, value]) => ({
-          key,
-          value: typeof value === 'object' ? JSON.stringify(value) : String(value)
-        }));
-
-      setPreviewData({
-        timestamp: data.timestamp,
-        childCount: data.child_logs,
-        fields
-      });
-    } catch (error) {
-      console.error('Failed to fetch preview:', error);
-    } finally {
-      setIsLoadingPreview(false);
-    }
-  }, [item.id]);
-
-  const handleMouseEnter = () => {
-    setShowPreview(true);
-    if (!previewData) {
-      fetchPreviewData();
-    }
-  };
 
   const fetchChildLogs = async () => {
     setIsLoading(true);
@@ -122,19 +84,11 @@ export default function GridItem({ item }: Props) {
     setExpanded(!expanded);
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left; // x position within the element
-    setMousePosition({ x, y: e.clientY });
-  };
-
   return (
-    <div className="w-full relative group">
+    <div className="w-full relative">
       <div 
-        className={`flex justify-between items-center w-full px-2 ${bgColor} relative`}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={() => setShowPreview(false)}
-        onMouseMove={handleMouseMove}
+        className={`flex justify-between items-center w-full px-2 ${bgColor}`}
+        onMouseEnter={onHover}
       >
         <div className="flex items-center flex-1 min-w-0">
           {item.child_logs > 0 && (
@@ -173,45 +127,6 @@ export default function GridItem({ item }: Props) {
           </a>
         </div>
         <span className="ml-4 whitespace-nowrap">{timeConverter(item.timestamp)}</span>
-        
-        {showPreview && (
-          <div 
-            className="fixed z-50 w-96 transform -translate-x-1/2 transition-all duration-75"
-            style={{ 
-              left: `${mousePosition.x}px`,
-              top: `${mousePosition.y + 20}px` // 20px offset from cursor
-            }}
-          >
-            <div className="bg-teal-900/30 rounded-lg border-2 border-amber-800/50 shadow-lg p-4 backdrop-blur-md">
-              {isLoadingPreview ? (
-                <div className="flex items-center justify-center h-24">
-                  <div className="loading loading-spinner loading-lg text-teal-200"></div>
-                </div>
-              ) : previewData && (
-                <div className="space-y-2 animate-fadeIn text-teal-50">
-                  <div className="flex justify-between items-center border-b border-teal-700/50 pb-2">
-                    <span className="text-sm font-medium text-teal-200">
-                      {timeConverter(previewData.timestamp)}
-                    </span>
-                    {previewData.childCount > 0 && (
-                      <span className="badge badge-sm bg-teal-800/50 text-teal-100 border-teal-600">
-                        {previewData.childCount} children
-                      </span>
-                    )}
-                  </div>
-                  <div className="space-y-1.5">
-                    {previewData.fields.map(({ key, value }, index) => (
-                      <div key={index} className="grid grid-cols-[auto,1fr] gap-2 text-sm">
-                        <span className="font-medium text-teal-200/90">{key}:</span>
-                        <span className="truncate text-teal-50/90">{value}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
       </div>
       
       {expanded && (
