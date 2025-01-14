@@ -1,14 +1,17 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi import Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from app.util import flatten
-from app.models import ErLog
+from app.models import ErLog, User, get_current_user
 from app.query import QBuilder
 import structlog
 from structlog import get_logger
 import ujson
 import uuid
 import secrets
+from typing import Annotated
+from fastapi.security import OAuth2PasswordBearer
+from clickhouse_driver import Client
 
 api_keys = ["ek-QldMOqfEWSpG_u6VCJv3ng_OD97OiXPDh5Luqvc"]
 
@@ -23,9 +26,7 @@ structlog.configure(processors=[structlog.processors.JSONRenderer()])
 def insert_log(log):
     logger = get_logger()
     id = str(uuid.uuid4())
-    # logger.info("Inserting log", id=id)
     if log == "":
-        # logger.error("Log is none, skipping", parent_id=id)
         return False
 
     try:
@@ -40,19 +41,20 @@ def insert_log(log):
         logger.error("Failed flattening json", parent_id=id, e=str(e))
         return False
 
-    # try:
     erlog = ErLog(log)
     erlog.parse_log(flattened)
 
     if erlog._id == None:
         erlog._id = str(uuid.uuid4())
-    # except Exception as e:
-    #     logger.error("Failed parsing log", parent_id=id, e=str(e))
-    #     return False
 
     if erlog._parent_id == None:
-        # just make the parent id somethign random
         erlog._parent_id = str("00000000-0000-0000-0000-000000000000")
+    else:
+        print("updating child logs")
+        client.execute(
+            "ALTER TABLE erlogs UPDATE child_logs = child_logs + 1 WHERE id = %(parent_id)s",
+            {"parent_id": str(erlog._parent_id)},
+        )
 
     client.execute(
         "INSERT INTO erlogs VALUES",
@@ -68,59 +70,75 @@ def insert_log(log):
                 erlog._number_keys,
                 erlog._number_values,
                 erlog._raw_log,
+                erlog._child_logs,
             ]
         ],
     )
-    # except Exception as e:
-    #     print(e)
-    #     logger.error("Failed inserting into e.erlogs table", parent_id=id, e=str(e))
-    #     return False
 
     return True
 
 
-# async def read_from_file():
-#     f = os.environ["LOGS"]
-#     files = f.split(" ")
-#     async for line in atail("file1.txt"):
-#         # todo, get file name with it
-#         insert_log(str(line[0]))
-
-
-# client = Session()
-# client.query(
-#     "CREATE TABLE IF NOT EXISTS erlogs (id UUID primary key, parent_id UUID, timestamp DOUBLE, string_keys Array(String), string_values Array(String), bool_keys Array(String), bool_values Array(Boolean), number_keys Array(String), number_values Array(Double), raw_log String) Engine = MergeTree;"
-# )
-
-# client.query("CREATE DATABASE IF NOT EXISTS e ENGINE = Memory")
-
-
-from clickhouse_driver import Client
-
 client = Client(host="localhost", password="test123")
-# conn = dbapi.connect(path="./logs")
-# client = conn.clientsor()
 
 print("Creating tables..")
 # client.execute("CREATE DATABASE IF NOT EXISTS e ENGINE = Atomic;")
 res = client.execute(
-    "CREATE TABLE IF NOT EXISTS erlogs (id UUID primary key, parent_id UUID, timestamp DOUBLE, string_keys Array(String), string_values Array(String), bool_keys Array(String), bool_values Array(Boolean), number_keys Array(String), number_values Array(Double), raw_log String) Engine = MergeTree;"
+    "CREATE TABLE IF NOT EXISTS erlogs (id UUID primary key, parent_id UUID, timestamp DOUBLE, string_keys Array(String), string_values Array(String), bool_keys Array(String), bool_values Array(Boolean), number_keys Array(String), number_values Array(Double), raw_log String, child_logs UInt32) Engine = MergeTree;"
+)
+client.execute(
+    "CREATE TABLE IF NOT EXISTS users (id UUID primary key, email String, hashed_password String) Engine = MergeTree;"
+)
+
+client.execute(
+    "CREATE TABLE IF NOT EXISTS sessions (id UUID primary key, session_id String, user_id Int32) Engine = MergeTree;"
 )
 
 print("Finished creating tables")
 
-# print(client.execute("INSERT INTO e.hi (a, b) VALUES (%s, %s);", ["he", 32]))
-# client.execute("SELECT * FROM e.hi")
-# res = client.fetchall()
-# print(res)
-# sys.exit(0)
-# df = pd.DataFrame({"a": [str("hi")], "b": [32]})
+fake_users_db = {
+    "johndoe": {
+        "username": "johndoe",
+        "full_name": "John Doe",
+        "email": "johndoe@example.com",
+        "hashed_password": "fakehashedsecret",
+        "disabled": False,
+    },
+    "alice": {
+        "username": "alice",
+        "full_name": "Alice Wonderson",
+        "email": "alice@example.com",
+        "hashed_password": "fakehashedsecret2",
+        "disabled": True,
+    },
+}
 
 
-# tbl = cdf.Table(dataframe=df)
-# h = tbl.query("INSERT INTO e.hi SELECT a, b FROM __table__")
+def hash_password(password: str):
+    return "hashed" + password
+
+
+def get_user(session_id: str):
+    user_ids = client.execute(
+        "SELECT user_id FROM sessions WHERE session_id = %(session_id)s;",
+        {"session_id": session_id},
+    )
+    print(user_ids)
+    pass
+
 
 app = FastAPI()
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+
+@app.get("/users/me")
+async def read_me(current_user: Annotated[User, Depends(get_current_user)]):
+    return current_user
+
+
+@app.get("/items/")
+async def items(token: Annotated[str, Depends(oauth2_scheme)]):
+    return {"token": token}
 
 
 # @app.on_event("startup")
@@ -227,7 +245,9 @@ async def root(request: Request):
 
     logs = []
     for log in l:
-        logs.append({"id": log[0], "timestamp": log[1], "log": log[2]})
+        logs.append(
+            {"id": log[0], "timestamp": log[1], "log": log[2], "child_logs": log[3]}
+        )
 
     return logs
 

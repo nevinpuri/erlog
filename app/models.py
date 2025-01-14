@@ -1,5 +1,24 @@
 from datetime import datetime, timezone
+from pydantic import BaseModel
 import uuid
+
+
+class User(BaseModel):
+    username: str
+    email: str | None = None
+
+
+class DBUser(User):
+    hashed_password: str
+
+
+def decode_token(token):
+    return User(username=token + "fakecoded", email="hi@example.com")
+
+
+def get_current_user(token):
+    user = decode_token(token)
+    return user
 
 
 class ErLog:
@@ -18,6 +37,7 @@ class ErLog:
 
         self._raw_log = raw_log
         self._parent_id = None
+        self._child_logs = 0
 
     def parse_log(self, log):
         for k, v in log.items():

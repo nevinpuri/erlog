@@ -12,3 +12,5 @@ logs.db.wal
 
 .DS_Store
 logs/
+
+.venv/

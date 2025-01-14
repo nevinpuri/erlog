@@ -166,3 +166,20 @@ ours:
 
 - you dont need to worry about infastructure
 - you pay per month
+
+## Make a filter be logs with children updated recently
+
+## Alow filtering to be done on title + messsage
+
+## Filtering will be main way we can differentiate from discord, also having this extra data from the client libraries
+
+- keep the client libraries, say ok put this here, and after you send in, you can send MORE data (not just message titel simple shit etc but full json, and then filter on that, so you can have really advanced filters and charts from this thing as oppoesd to discord/slack)
+
+## 10X experience
+
+currently there isn't that much, but mainly for users the killer pain point will be the metrics
+
+
+## Installing on mac
+CFLAGS="-I$(brew --prefix openssl)/include" \
+SWIG_FEATURES="-cpperraswarn -includeall -I$(brew --prefix openssl)/include" \

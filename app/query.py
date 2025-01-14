@@ -14,7 +14,7 @@ import uuid
 
 class QBuilder:
     def __init__(self):
-        self.query = "SELECT id, timestamp, raw_log from erlogs"
+        self.query = "SELECT id, timestamp, raw_log, child_logs from erlogs"
         self.params = {}
         self.added = False
 
@@ -141,7 +141,7 @@ class QBuilder:
                 str_keyid = str(uuid.uuid4())
                 num_keyid = str(uuid.uuid4())
                 bool_keyid = str(uuid.uuid4())
-                self.query += f" list_contains(string_keys, %({str_keyid})s) == false AND list_contains(number_keys, %({num_keyid})s) == false AND list_contains(bool_keys, %({bool_keyid})s) == false "
+                self.query += f" has(string_keys, %({str_keyid})s) == false AND has(number_keys, %({num_keyid})s) == false AND has(bool_keys, %({bool_keyid})s) == false "
                 self.params.update({str_keyid: fname})
                 self.params.update({num_keyid: fname})
                 self.params.update({bool_keyid: fname})
@@ -186,17 +186,22 @@ class QBuilder:
         pass
 
     def parse_word(self, w):
-        print(w.value)
         kf, kv, val = self.parse_value(w.value)
+        if kf == "string_keys":
+            val_id = str(uuid.uuid4())
+            val_id2 = str(uuid.uuid4())
+            # self.query += f"has({kf}, %({val_id})s) OR has({kv}, %({val_id2})s)"
+            self.query += f" arrayExists(x -> lower(x) LIKE %({val_id})s, {kf}) or arrayExists(x -> lower(x) LIKE %({val_id2})s, {kv})"
+            self.params.update({val_id: f"%{val}%"})
+            self.params.update({val_id2: f"%{val}%"})
+            return
         # if self.added == False:
         #     self.query += " WHERE "
         #     self.added = True
 
         val_id = str(uuid.uuid4())
         val_id2 = str(uuid.uuid4())
-        self.query += (
-            f"list_contains({kf}, %({val_id})s) OR list_contains({kv}, %({val_id2})s)"
-        )
+        self.query += f"has({kf}, %({val_id})s) OR has({kv}, %({val_id2})s)"
         self.params.update({val_id: val})
         self.params.update({val_id2: val})
 
@@ -210,12 +215,10 @@ class QBuilder:
 
         val_id = str(uuid.uuid4())
         val_id2 = str(uuid.uuid4())
-        self.query += (
-            f"list_contains({kf}, %({val_id})s) OR list_contains({kv}, %({val_id2})s)"
-        )
+        self.query += f"has({kf}, %({val_id})s) OR has({kv}, %({val_id2})s)"
         self.params.update({val_id: val})
         self.params.update({val_id2: val})
-        # self.query += "list_contains({}, ?)".format(kf)
+        # self.query += "has({}, ?)".format(kf)
         # self.params.append(val)
 
     def parse_value(self, val):
