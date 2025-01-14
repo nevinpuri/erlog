@@ -83,28 +83,28 @@ export default function Grid({ logs }: IProps) {
             transform: 'translate(0, 0)'
           }}
         >
-          <div className="bg-teal-900/30 rounded-lg border-2 border-amber-800/50 shadow-lg p-4 backdrop-blur-md">
+          <div className="bg-gray-800/95 rounded-lg border-2 border-gray-600/50 shadow-lg p-4 backdrop-blur-[2px] before:absolute before:inset-0 before:bg-noise before:opacity-[0.15] before:mix-blend-overlay before:contrast-150 relative overflow-hidden">
             {isLoadingPreview ? (
               <div className="flex items-center justify-center h-24">
-                <div className="loading loading-spinner loading-lg text-teal-200"></div>
+                <div className="loading loading-spinner loading-lg text-white"></div>
               </div>
             ) : previewData && (
-              <div className="space-y-2 animate-fadeIn text-teal-50">
-                <div className="flex justify-between items-center border-b border-teal-700/50 pb-2">
-                  <span className="text-sm font-medium text-teal-200">
+              <div className="space-y-3 animate-fadeIn text-white">
+                <div className="flex justify-between items-center border-b border-gray-600/30 pb-2">
+                  <span className="text-base font-semibold text-white">
                     {timeConverter(previewData.timestamp)}
                   </span>
                   {previewData.childCount > 0 && (
-                    <span className="badge badge-sm bg-teal-800/50 text-teal-100 border-teal-600">
+                    <span className="badge badge-md bg-gray-700/80 text-white border-gray-600">
                       {previewData.childCount} children
                     </span>
                   )}
                 </div>
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   {previewData.fields.map(({ key, value }, index) => (
-                    <div key={index} className="grid grid-cols-[auto,1fr] gap-2 text-sm">
-                      <span className="font-medium text-teal-200/90">{key}:</span>
-                      <span className="truncate text-teal-50/90">{value}</span>
+                    <div key={index} className="grid grid-cols-[auto,1fr] gap-3 text-base">
+                      <span className="font-bold text-white">{key}:</span>
+                      <span className="truncate text-white/95">{value}</span>
                     </div>
                   ))}
                 </div>
