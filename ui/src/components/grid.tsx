@@ -78,9 +78,9 @@ export default function Grid({ logs }: IProps) {
         <div 
           className="fixed z-50 w-96 pointer-events-none"
           style={{ 
-            left: `${mousePosition.x + 16}px`,
-            top: `${mousePosition.y + 16}px`,
-            transform: 'translate(0, -50%)'
+            left: `${mousePosition.x + 12}px`,
+            top: `${mousePosition.y + 8}px`,
+            transform: 'translate(0, 0)'
           }}
         >
           <div className="bg-teal-900/30 rounded-lg border-2 border-amber-800/50 shadow-lg p-4 backdrop-blur-md">
