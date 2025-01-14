@@ -58,6 +58,7 @@ export default function GridItem({ item }: Props) {
   const [showPreview, setShowPreview] = useState(false);
   const [previewData, setPreviewData] = useState<LogPreview | null>(null);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const log = JSON.parse(item.log);
   const bgColor = getColor(log.level);
 
@@ -121,12 +122,19 @@ export default function GridItem({ item }: Props) {
     setExpanded(!expanded);
   };
 
+  const handleMouseMove = (e: React.MouseEvent) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left; // x position within the element
+    setMousePosition({ x, y: e.clientY });
+  };
+
   return (
     <div className="w-full relative group">
       <div 
         className={`flex justify-between items-center w-full px-2 ${bgColor} relative`}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={() => setShowPreview(false)}
+        onMouseMove={handleMouseMove}
       >
         <div className="flex items-center flex-1 min-w-0">
           {item.child_logs > 0 && (
@@ -167,29 +175,35 @@ export default function GridItem({ item }: Props) {
         <span className="ml-4 whitespace-nowrap">{timeConverter(item.timestamp)}</span>
         
         {showPreview && (
-          <div className="absolute left-0 top-full mt-2 z-50 w-96 transform scale-95 opacity-0 group-hover:scale-100 group-hover:opacity-100 transition-all duration-200">
-            <div className="bg-base-200 rounded-lg border-2 border-base-300 shadow-lg p-4 backdrop-blur-sm">
+          <div 
+            className="fixed z-50 w-96 transform -translate-x-1/2 transition-all duration-75"
+            style={{ 
+              left: `${mousePosition.x}px`,
+              top: `${mousePosition.y + 20}px` // 20px offset from cursor
+            }}
+          >
+            <div className="bg-teal-900/30 rounded-lg border-2 border-amber-800/50 shadow-lg p-4 backdrop-blur-md">
               {isLoadingPreview ? (
                 <div className="flex items-center justify-center h-24">
-                  <div className="loading loading-spinner loading-lg text-primary"></div>
+                  <div className="loading loading-spinner loading-lg text-teal-200"></div>
                 </div>
               ) : previewData && (
-                <div className="space-y-2 animate-fadeIn">
-                  <div className="flex justify-between items-center border-b border-base-300 pb-2">
-                    <span className="text-sm font-medium">
+                <div className="space-y-2 animate-fadeIn text-teal-50">
+                  <div className="flex justify-between items-center border-b border-teal-700/50 pb-2">
+                    <span className="text-sm font-medium text-teal-200">
                       {timeConverter(previewData.timestamp)}
                     </span>
                     {previewData.childCount > 0 && (
-                      <span className="badge badge-primary badge-sm">
+                      <span className="badge badge-sm bg-teal-800/50 text-teal-100 border-teal-600">
                         {previewData.childCount} children
                       </span>
                     )}
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-1.5">
                     {previewData.fields.map(({ key, value }, index) => (
                       <div key={index} className="grid grid-cols-[auto,1fr] gap-2 text-sm">
-                        <span className="font-medium text-primary-content/70">{key}:</span>
-                        <span className="truncate">{value}</span>
+                        <span className="font-medium text-teal-200/90">{key}:</span>
+                        <span className="truncate text-teal-50/90">{value}</span>
                       </div>
                     ))}
                   </div>
