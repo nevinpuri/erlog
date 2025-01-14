@@ -69,7 +69,7 @@ export default function Grid({ logs }: IProps) {
         <div key={log.id} className="w-full">
           <GridItem 
             item={log} 
-            onHover={() => fetchPreviewData(log.id)}
+            onHover={(id) => fetchPreviewData(id)}
           />
         </div>
       ))}

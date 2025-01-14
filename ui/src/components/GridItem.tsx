@@ -36,7 +36,7 @@ function getLink(item) {
 
 interface Props {
   item: Item;
-  onHover: () => void;
+  onHover: (id: string) => void;
 }
 
 interface Item {
@@ -88,7 +88,7 @@ export default function GridItem({ item, onHover }: Props) {
     <div className="w-full relative">
       <div 
         className={`flex justify-between items-center w-full px-2 ${bgColor}`}
-        onMouseEnter={onHover}
+        onMouseEnter={() => onHover(item.id)}
       >
         <div className="flex items-center flex-1 min-w-0">
           {item.child_logs > 0 && (
@@ -132,7 +132,11 @@ export default function GridItem({ item, onHover }: Props) {
       {expanded && (
         <div className="ml-6 border-l-2 border-base-200 pl-2">
           {childLogs && childLogs.map(childLog => (
-            <GridItem key={childLog.id} item={childLog} />
+            <GridItem 
+              key={childLog.id} 
+              item={childLog} 
+              onHover={(id) => onHover(id)}
+            />
           ))}
         </div>
       )}
