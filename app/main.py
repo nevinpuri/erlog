@@ -350,6 +350,29 @@ async def get_children(log_id: str):
     ]
 
 
+@app.get("/preview/{log_id}")
+async def get_log_preview(log_id: str):
+    log = client.execute(
+        """
+        SELECT id, timestamp, raw_log, child_logs 
+        FROM erlogs 
+        WHERE id = %(log_id)s
+        LIMIT 1
+        """,
+        {"log_id": log_id}
+    )
+    
+    if not log:
+        raise HTTPException(status_code=404, detail="Log not found")
+        
+    return {
+        "id": log[0][0],
+        "timestamp": log[0][1],
+        "log": log[0][2],
+        "child_logs": log[0][3]
+    }
+
+
 if __name__ == "__main__":
     import uvicorn
 
