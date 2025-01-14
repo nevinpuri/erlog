@@ -10,6 +10,7 @@ from luqum.tree import (
     Group,
 )
 import uuid
+import time
 
 
 class QBuilder:
@@ -18,36 +19,39 @@ class QBuilder:
         self.params = {}
         self.added = False
 
-    def parse(self, q, page, show_children):
+    def parse(self, q, page, show_children, time_range="all"):
+        where_conditions = []
+        
+        # Add time filter first
+        time_filter = self.build_time_filter(time_range)
+        if time_filter:
+            where_conditions.append(time_filter)
+
         if q == "":
-            # WHERE parent_id ISNULL
-            u = str(uuid.uuid4())
             if show_children == False:
-                self.query += (
-                    " WHERE parent_id = '00000000-0000-0000-0000-000000000000' "
-                )
-            self.query += f" ORDER BY timestamp DESC LIMIT 50 OFFSET %({u})s "
-            self.params.update({u: int(page * 50)})
-            return
+                where_conditions.append("parent_id = '00000000-0000-0000-0000-000000000000'")
+        else:
+            self.query += " WHERE "
+            self.parse_class(f)
+            # Remove the last WHERE if nothing was parsed
+            if self.query.strip()[-5:] == "WHERE":
+                self.query = self.query.strip()[:-5]
+            else:
+                where_conditions.append(self.query.split("WHERE", 1)[1])
+                # Reset query to before WHERE clause
+                self.query = self.query.split("WHERE", 1)[0]
 
-        f = parser.parse(q)
-        print(repr(f))
-        # print(f.children[0].include)
-        # print(dir(f.children[0].children[0]))
-        # print(dir(f.children[0]))
-        self.query += " WHERE "
-        self.parse_class(f)
+        if show_children == False and q != "":
+            where_conditions.append("parent_id = '00000000-0000-0000-0000-000000000000'")
 
-        # nothing was parsed
-        # if self.query.strip()[-5:] == "WHERE":
-        #     pass
+        # Combine all WHERE conditions
+        if where_conditions:
+            self.query += " WHERE " + " AND ".join(where_conditions)
 
+        # Add limit and offset
         u = str(uuid.uuid4())
-        if show_children == False:
-            self.query += " AND parent_id = '00000000-0000-0000-0000-000000000000' "
         self.query += f" ORDER BY timestamp DESC LIMIT 50 OFFSET %({u})s "
         self.params.update({u: int(page * 50)})
-        # print(self.query, self.params)
 
     def parse_class(self, f):
         if isinstance(f, AndOperation):
@@ -258,6 +262,24 @@ class QBuilder:
             # return val
         except Exception:
             return None
+
+    def build_time_filter(self, time_range):
+        if time_range == "all":
+            return ""
+            
+        current_time = time.time()
+        
+        time_filters = {
+            "1h": current_time - 3600,
+            "24h": current_time - 86400,
+            "7d": current_time - 604800,
+            "30d": current_time - 2592000
+        }
+        
+        if time_range in time_filters:
+            return f"timestamp >= {time_filters[time_range]}"
+            
+        return ""
 
 
 if __name__ == "__main__":

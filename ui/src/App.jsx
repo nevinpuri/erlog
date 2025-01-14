@@ -3,8 +3,9 @@ import Search from "./components/search";
 import { useEffect } from "react";
 import Grid from "./components/grid";
 import { useLocation, useNavigate } from "react-router-dom";
+import TimeFilter from "./components/TimeFilter";
 
-const fetchLogs = async (query, page, showChildren) => {
+const fetchLogs = async (query, page, showChildren, timeRange) => {
   console.log(showChildren);
   console.log("SHOW CHILDREN");
   let q = query.replace(" and ", " AND ");
@@ -14,7 +15,7 @@ const fetchLogs = async (query, page, showChildren) => {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ query: q, page, showChildren }),
+    body: JSON.stringify({ query: q, page, showChildren, timeRange }),
   });
 
   if (response.status == 400) {
@@ -35,154 +36,91 @@ export function useQuery() {
 function App() {
   const router = useNavigate();
   const q = useQuery();
-  // const [v, setV] = useState("");
-  const getDefaultShowChildrenVal = () => {
-    const c = q.get("children");
-    if (c === "true") {
-      return true;
-    }
-    return false;
-  };
 
   const [err, setErr] = useState(null);
   const [logs, setLogs] = useState(null);
-  const [showChildren, setShowChildren] = useState(getDefaultShowChildrenVal());
+  const [isLoading, setIsLoading] = useState(true);
+  const [showChildren, setShowChildren] = useState(() => {
+    const c = q.get("children");
+    return c === "true";
+  });
+  const [timeRange, setTimeRange] = useState(() => {
+    return q.get("time") || "all";
+  });
 
-  // useEffect(() => {
-  //   router(`/?query=${e}&p=${0}&children=${showChildren}`);
-  // }, [showChildren]);
+  // Handle URL updates when filters change
+  useEffect(() => {
+    const currentQuery = q.get("query") || "";
+    const currentPage = q.get("page") || "0";
+    router(`/?query=${currentQuery}&page=${currentPage}&children=${showChildren}&time=${timeRange}`);
+  }, [showChildren, timeRange]);
+
+  // Fetch logs when URL params change
+  useEffect(() => {
+    console.log("Fetching logs with params:", {
+      query: q.get("query"),
+      children: q.get("children"),
+      page: q.get("page"),
+      time: q.get("time")
+    });
+    f();
+  }, [q.get("query"), q.get("children"), q.get("page"), q.get("time")]);
 
   const f = async () => {
-    let page = q.get("p");
-    let query = q.get("query");
-    let showChildren = q.get("children");
-    if (!query) {
-      query = "";
-    }
+    setIsLoading(true);
+    try {
+      let page = q.get("page");
+      let query = q.get("query");
+      let showChildren = q.get("children");
+      let timeRange = q.get("time");
 
-    if (!page) {
-      page = 0;
-    }
+      if (!query) query = "";
+      if (!page) page = 0;
+      if (!showChildren) showChildren = false;
+      if (!timeRange) timeRange = "all";
 
-    if (!showChildren) {
-      showChildren = false;
+      const { logs, err } = await fetchLogs(
+        query,
+        page,
+        showChildren,
+        timeRange
+      );
+      setLogs(logs);
+      setErr(err);
+    } catch (error) {
+      setErr("An error occurred while fetching logs");
+      console.error(error);
+    } finally {
+      setIsLoading(false);
     }
-
-    const { logs, err } = await fetchLogs(
-      query,
-      page,
-      showChildren
-      // q.get("query"),
-      // q.get("page"),
-      // q.get("children")
-    );
-    setLogs(logs);
-    setErr(err);
   };
 
-  useEffect(() => {
-    if (!q.get("query") || !q.get("page") || !q.get("children")) {
-      router(`/?query=&page=0&children=${showChildren}`);
-    }
-  }, [q, router]);
-
-  useEffect(() => {
-    let query = q.get("query");
-    if (query === null) {
-      query = "";
-    }
-    router(`/?query=${query}&page=0&children=${showChildren}`);
-  }, [showChildren, q, router]);
-
-  useEffect(() => {
-    console.log("QUERY CHNSGED!!!!");
-    console.log(q.get("query"));
-    f();
-  }, [q.get("query"), q.get("children"), q.get("page")]);
-
-  // useEffect(() => {
-  //   // const doWork = async () => {
-  //   //   let page = q.get("p");
-
-  //   //   if (!page) {
-  //   //     page = 0;
-  //   //   }
-
-  //   //   const { logs, err } = await fetchLogs(query, page);
-  //   //   setLogs(logs);
-  //   //   setErr(err);
-  //   // };
-
-  //   // doWork();
-  //   f();
-  // }, [query]);
-
-  // useEffect(() => {
-  // }, [q.get("query")]);
-
-  // async function handleSubmit(e) {
-  //   e.preventDefault();
-
-  //   if (e.key === "Enter") {
-  //     setQuery(v);
-  //   }
-
-  //   // refreshLogs();
-  //   // const { logs, err } = await fetchLogs(v);
-  //   // setLogs(logs);
-  //   // setErr(err);
-  // }
-
-  if (!logs) {
-    return (
+  return (
+    <div className="overflow-x-none">
       <div>
         <Search
-          // onSubmit={handleSubmit}
-          // onChange={(e) => setV(e.target.value)}
           defaultValue={q.get("query")}
           onEnter={(e) => {
-            console.log("enter!!");
-            console.log(e);
-            // setQuery(e);
-            // q.set("query", e);
-            router(`/?query=${e}&p=${0}&children=${showChildren}`);
+            router(`/?query=${e}&page=0&children=${showChildren}&time=${timeRange}`);
           }}
           showChildren={showChildren}
           onShowChildrenChange={(e) => {
             setShowChildren(e);
           }}
+          timeRange={timeRange}
+          onTimeRangeChange={(range) => {
+            setTimeRange(range);
+          }}
         />
-        <p className="text-red-500 text-sm">{err}</p>
       </div>
-    );
-  }
-  return (
-    <div className="overflow-x-none">
-      <Search
-        // onSubmit={handleSubmit}
-        // onChange={(e) => setV(e.target.value)}
-        defaultValue={q.get("query")}
-        onEnter={(e) => {
-          // setQuery(e);
-          console.log("enter!!");
-          console.log(e);
-          router(`/?query=${e}&p=${0}&children=${showChildren}`);
-          // q.set("query", e);
-        }}
-        showChildren={showChildren}
-        onShowChildrenChange={(e) => {
-          setShowChildren(e);
-        }}
-      />
       <p className="text-red-500 text-sm">{err}</p>
-      <Grid logs={logs} />
-      {/* <div className="flex flex-col">
-        {logs.map((log) => (
-          <a href={`/${log.id}`} key={log.id}>
-            {log.log}
-          </a>
-        ))}
-      </div> */}
+      {isLoading ? (
+        <div className="flex justify-center items-center p-8">
+          <div className="loading loading-spinner loading-lg"></div>
+        </div>
+      ) : (
+        <Grid logs={logs || []} />
+      )}
     </div>
   );
 }

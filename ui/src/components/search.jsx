@@ -1,4 +1,5 @@
 import { useState } from "react";
+import TimeFilter from "./TimeFilter";
 
 export default function Search({
   onSubmit,
@@ -7,30 +8,43 @@ export default function Search({
   onEnter,
   onShowChildrenChange,
   showChildren,
+  timeRange,
+  onTimeRangeChange,
 }) {
   const [v, setV] = useState("");
+
+  const handleTimeRangeChange = (range) => {
+    if (onTimeRangeChange) {
+      onTimeRangeChange(range);
+    }
+  };
+
+  const handleShowChildrenChange = (checked) => {
+    if (onShowChildrenChange) {
+      onShowChildrenChange(checked);
+    }
+  };
+
   return (
-    <form className="grid grid-cols-8" onSubmit={(e) => e.preventDefault()}>
+    <form className="grid grid-cols-12 gap-4" onSubmit={(e) => e.preventDefault()}>
       <label className="input input-bordered w-full col-span-6 flex items-center">
         <input
           type="text"
           onChange={(e) => {
             setV(e.target.value);
-            if (!onChange) {
-              return;
+            if (onChange) {
+              onChange(e);
             }
-
-            onChange(e);
           }}
           className="grow"
           placeholder="search"
           defaultValue={defaultValue}
           onKeyDown={(e) => {
-            if (e.key === "Enter") {
+            if (e.key === "Enter" && onEnter) {
               onEnter(v);
             }
           }}
-        ></input>
+        />
         <div className="tooltip tooltip-bottom" data-tip="Query help">
           <a
             href="https://github.com/nevinpuri/erlog?tab=readme-ov-file#querying"
@@ -54,16 +68,22 @@ export default function Search({
           </a>
         </div>
       </label>
-      <div className="flex items-center">
-        <div className="form-control ml-4">
+
+      <div className="col-span-2">
+        <TimeFilter
+          value={timeRange}
+          onChange={handleTimeRangeChange}
+        />
+      </div>
+
+      <div className="col-span-4 flex items-center">
+        <div className="form-control">
           <label className="label cursor-pointer">
             <span className="label-text">Show child logs</span>
             <input
               type="checkbox"
               className="checkbox ml-2"
-              onChange={(e) => {
-                onShowChildrenChange(e.target.checked);
-              }}
+              onChange={(e) => handleShowChildrenChange(e.target.checked)}
               checked={showChildren}
             />
           </label>

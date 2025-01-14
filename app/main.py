@@ -205,6 +205,7 @@ async def root(request: Request):
     user_query = body["query"]
     page = body["page"]
     show_children = body["showChildren"]
+    time_range = body.get("timeRange", "all")
     if show_children == "true":
         show_children = True
     else:
@@ -226,7 +227,7 @@ async def root(request: Request):
     # try:
     logger.info("building query", user_query=user_query, p=p, parent_id=id)
     q = QBuilder()
-    q.parse(user_query, p, show_children)
+    q.parse(user_query, p, show_children, time_range)
     query, params = q.query, q.params
     # except Exception as e:
     #     print(e)

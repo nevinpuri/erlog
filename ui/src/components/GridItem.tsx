@@ -2,7 +2,7 @@ import React, { useState, useCallback } from "react";
 import { cvtReadable, timeConverter } from "../util";
 
 function getColor(logLevel: any) {
-  console.log('Log level:', logLevel, typeof logLevel);
+  // console.log('Log level:', logLevel, typeof logLevel);
   
   if (!logLevel) {
     return '';
@@ -20,18 +20,24 @@ function getColor(logLevel: any) {
     case "debug":
       return "bg-purple-400/20";
     default:
-      console.log('No match for log level:', logLevel);
+      // console.log('No match for log level:', logLevel);
       return "";
   }
 }
 
-function getLink(item) {
-  console.log(item.parentId);
-  if (item.parentId) {
-    return `/${item.parentId}#${item.id}`;
-  }
+function getLink(log: any) {
+  if (!log) return '#';
+  
+  const id = log.id || log._id;
+  if (!id) return '#';
+  
+  // const parentId = log.parentId || log.parent_id || log._parent_id;
+  
+  // if (parentId && parentId !== '00000000-0000-0000-0000-000000000000') {
+  //   return `/${parentId}#${id}`;
+  // }
 
-  return `/${item.id}`;
+  return `/${id}`;
 }
 
 interface Props {
@@ -58,6 +64,7 @@ export default function GridItem({ item, onHover }: Props) {
   const [isLoading, setIsLoading] = useState(false);
   const log = JSON.parse(item.log);
   const bgColor = getColor(log.level);
+  const linkUrl = getLink(item);
 
   const fetchChildLogs = async () => {
     setIsLoading(true);
@@ -122,7 +129,16 @@ export default function GridItem({ item, onHover }: Props) {
               </button>
             </div>
           )}
-          <a href={getLink(log)} key={item.id} className="link link-hover flex-1 min-w-0 ml-2">
+          <a 
+            href={linkUrl}
+            key={item.id} 
+            className="link link-hover flex-1 min-w-0 ml-2"
+            onClick={(e) => {
+              if (linkUrl === '#') {
+                e.preventDefault();
+              }
+            }}
+          >
             <span className="block truncate">{cvtReadable(log)}</span>
           </a>
         </div>
