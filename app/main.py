@@ -75,7 +75,7 @@ def insert_log(log):
         ],
     )
 
-    return True
+    return erlog._id
 
 
 client = Client(host="localhost", password="test123")
@@ -291,14 +291,14 @@ async def get_log(request: Request):
 
 @app.post("/")
 async def log(request: Request):
-    if not "Authorization" in request.headers:
-        raise HTTPException(401, "Unauthorized")
+    # if not "Authorization" in request.headers:
+    #     raise HTTPException(401, "Unauthorized")
 
-    key = request.headers["Authorization"]
-    key = key.replace("Bearer ", "")
+    # key = request.headers["Authorization"]
+    # key = key.replace("Bearer ", "")
 
-    if not key in api_keys:
-        raise HTTPException(401, "Unauthorized")
+    # if not key in api_keys:
+    #     raise HTTPException(401, "Unauthorized")
 
     body = await request.json()
     s = ujson.dumps(body)
@@ -330,6 +330,24 @@ async def log(request: Request):
     #     ],
     # )
     return {"status": status}
+
+
+@app.get("/children/{log_id}")
+async def get_children(log_id: str):
+    children = client.execute(
+        "SELECT id, timestamp, raw_log, child_logs FROM erlogs WHERE parent_id = %(parent_id)s ORDER BY timestamp ASC",
+        {"parent_id": log_id}
+    )
+    
+    return [
+        {
+            "id": child[0],
+            "timestamp": child[1],
+            "log": child[2],
+            "child_logs": child[3]
+        }
+        for child in children
+    ]
 
 
 if __name__ == "__main__":
